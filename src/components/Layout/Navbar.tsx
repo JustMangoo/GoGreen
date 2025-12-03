@@ -1,38 +1,40 @@
 import { NavLink } from "react-router";
-import { Home, Search, User } from "lucide-react";
+import { Home, LayoutList, User } from "lucide-react";
 
 export default function Navbar() {
   return (
-    <nav className="menu menu-horizontal bg-base-200">
-      <li>
+    <nav className="navbar fixed bottom-0 border-t border-base-300 bg-base-100 shadow-lg">
+      <div className="navbar-center flex w-full justify-around">
         <NavLink
           to="/"
-          className={({ isActive }) => (isActive ? "menu-active" : "")}
+          className={({ isActive }: { isActive: boolean }) =>
+            `btn btn-ghost flex-col gap-0 ${isActive ? "text-primary" : ""}`
+          }
         >
-          <Home size={20} />
-          Home
+          <Home size={32} />
+          <span className="text-xs">Home</span>
         </NavLink>
-      </li>
 
-      <li>
         <NavLink
           to="/methods"
-          className={({ isActive }) => (isActive ? "menu-active" : "")}
+          className={({ isActive }: { isActive: boolean }) =>
+            `btn btn-ghost flex-col gap-0 ${isActive ? "text-primary" : ""}`
+          }
         >
-          <Search size={20} />
-          Browse
+          <LayoutList size={32} />
+          <span className="text-xs">Methods</span>
         </NavLink>
-      </li>
 
-      <li>
         <NavLink
           to="/profile"
-          className={({ isActive }) => (isActive ? "menu-active" : "")}
+          className={({ isActive }: { isActive: boolean }) =>
+            `btn btn-ghost flex-col gap-0 ${isActive ? "text-primary" : ""}`
+          }
         >
-          <User size={20} />
-          Profile
+          <User size={32} />
+          <span className="text-xs">Profile</span>
         </NavLink>
-      </li>
+      </div>
     </nav>
   );
 }
