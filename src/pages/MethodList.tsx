@@ -2,15 +2,20 @@ import { Search, BookOpen, Heart } from "lucide-react";
 import { listMethods } from "../services/methods";
 import { useEffect, useState, useMemo } from "react";
 import type { Method } from "../services/methods";
+import AddMethodForm from "../components/Tools/AddMethodForm";
+import { supabase } from "../lib/supabaseClient";
 
 export default function MethodList() {
   const [methods, setMethods] = useState<Method[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
     new Set()
   );
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   useEffect(() => {
     let abort = false;
@@ -29,6 +34,33 @@ export default function MethodList() {
       .finally(() => {
         if (!abort) setLoading(false);
       });
+
+    return () => {
+      abort = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let abort = false;
+
+    const loadSavedMethods = async () => {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user || abort) return;
+
+      const { data, error: savedError } = await supabase
+        .from("saved_methods")
+        .select("method_id");
+
+      if (savedError || abort) return;
+
+      setSavedIds(new Set((data || []).map((row) => String(row.method_id))));
+    };
+
+    loadSavedMethods();
 
     return () => {
       abort = true;
@@ -70,17 +102,94 @@ export default function MethodList() {
     setSelectedCategories(new Set());
   };
 
+  const handleToggleSave = async (methodId: string) => {
+    setSavingId(methodId);
+    setError(null);
+
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        setError("You must be logged in to save methods.");
+        return;
+      }
+
+      const methodIdValue = Number(methodId);
+
+      if (Number.isNaN(methodIdValue)) {
+        setError("Invalid method id");
+        return;
+      }
+
+      if (savedIds.has(methodId)) {
+        const { error: deleteError } = await supabase
+          .from("saved_methods")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("method_id", methodIdValue);
+
+        if (deleteError) throw deleteError;
+
+        setSavedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(methodId);
+          return next;
+        });
+      } else {
+        const { error: insertError } = await supabase
+          .from("saved_methods")
+          .insert([{ user_id: user.id, method_id: methodId }]);
+
+        if (insertError) throw insertError;
+
+        setSavedIds((prev) => new Set(prev).add(methodId));
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to update saved methods"
+      );
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 items-center justify-start min-h-screen bg-base-100 p-4 mb-16">
-      <label className="input w-full">
-        <Search className="input-icon" size={16} />
-        <input
-          type="search"
-          placeholder="Search preserving methods"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+      <div className="w-full flex items-center gap-2">
+        <label className="input flex-1">
+          <Search className="input-icon" size={16} />
+          <input
+            type="search"
+            placeholder="Search preserving methods"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </label>
+        <button
+          className="btn btn-primary"
+          type="button"
+          onClick={() => setShowForm((s) => !s)}
+        >
+          {showForm ? "Close" : "Add"}
+        </button>
+      </div>
+
+      {showForm && (
+        <AddMethodForm
+          onSuccess={() => {
+            setShowForm(false);
+            setLoading(true);
+            listMethods()
+              .then(setMethods)
+              .catch((fetchError) => setError(fetchError.message))
+              .finally(() => setLoading(false));
+          }}
+          onCancel={() => setShowForm(false)}
         />
-      </label>
+      )}
 
       <form className="gap-2 flex flex-wrap w-full btn-group">
         <div className="flex flex-1 flex-row gap-2">
@@ -90,7 +199,7 @@ export default function MethodList() {
             }`}
             type="checkbox"
             name="fermenting"
-            aria-label="Ferment"
+            aria-label="Fermenting"
             checked={selectedCategories.has("Fermenting")}
             onChange={() => toggleCategory("Fermenting")}
           />
@@ -103,6 +212,28 @@ export default function MethodList() {
             aria-label="Canning"
             checked={selectedCategories.has("Canning")}
             onChange={() => toggleCategory("Canning")}
+          />
+        </div>
+        <div className="flex flex-1 flex-row gap-2">
+          <input
+            className={`btn flex-1 ${
+              selectedCategories.has("Smoking") ? "btn-active" : ""
+            }`}
+            type="checkbox"
+            name="smoking"
+            aria-label="Smoking"
+            checked={selectedCategories.has("Smoking")}
+            onChange={() => toggleCategory("Smoking")}
+          />
+          <input
+            className={`btn flex-1 ${
+              selectedCategories.has("Freezing") ? "btn-active" : ""
+            }`}
+            type="checkbox"
+            name="freezing"
+            aria-label="Freezing"
+            checked={selectedCategories.has("Freezing")}
+            onChange={() => toggleCategory("Freezing")}
           />
         </div>
         <div className="flex flex-1 flex-row gap-2">
@@ -146,33 +277,43 @@ export default function MethodList() {
         </div>
       )}
 
-      <ul className="list gap-2 p-0 bg-base-100 rounded-box w-full">
+      <ul className="grid grid-cols-2 gap-3 p-0 bg-base-100 rounded-box w-full">
         {filteredMethods.map((method) => (
-          <li key={method.id} className="list-row p-0">
-            <div>
-              <div className="figure w-32 h-32 rounded-box overflow-hidden bg-base-300">
+          <li key={method.id} className="p-0">
+            <div className="card bg-base-100 image-full shadow-sm h-48">
+              <figure>
                 <img
-                  src={method.image_url || "https://via.placeholder.com/128"}
+                  src={method.image_url || "https://placehold.co/400x300"}
                   alt={method.title}
+                  className="w-full h-full object-cover"
                 />
+              </figure>
+              <div className="card-body p-3">
+                <h2 className="card-title text-sm line-clamp-2">
+                  {method.title}
+                </h2>
+                <div className="text-xs opacity-80">{method.duration}</div>
+                <div className="card-actions items-baseline justify-between mt-auto">
+                  <div className="bg-base-200 rounded-box px-2 py-1 w-fit">
+                    <p className="text-xs text-neutral">{method.category}</p>
+                  </div>
+                  <button
+                    className={`btn btn-sm btn-circle ${
+                      savedIds.has(method.id)
+                        ? "btn-error text-white"
+                        : "btn-ghost"
+                    }`}
+                    disabled={savingId === method.id}
+                    onClick={() => handleToggleSave(method.id)}
+                  >
+                    <Heart
+                      size={18}
+                      className={savedIds.has(method.id) ? "fill-current" : ""}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
-            <div>
-              <div className="line-clamp-1">{method.title}</div>
-              <div className="text-xs uppercase font-semibold opacity-60">
-                {method.category} • {method.duration}
-              </div>
-              <p className="list-col-wrap text-xs line-clamp-2">
-                {method.description}
-              </p>
-            </div>
-
-            <button className="btn btn-square btn-ghost">
-              <BookOpen size={20} />
-            </button>
-            <button className="btn btn-square btn-ghost">
-              <Heart size={20} />
-            </button>
           </li>
         ))}
       </ul>

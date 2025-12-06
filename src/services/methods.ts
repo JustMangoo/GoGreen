@@ -27,9 +27,9 @@ export async function listMethods(userId?: string): Promise<Method[]> {
     .select("*")
     .order("created_at", { ascending: false });
 
-  /*   if (userId) {
+  if (userId) {
     query = query.eq("user_id", userId);
-  } */
+  }
 
   const { data, error } = await query;
   if (error) {
