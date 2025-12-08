@@ -1,16 +1,33 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { Mail, Lock } from "lucide-react";
+import { useNavigate } from "react-router";
+import { useEffect } from "react";
 
 type AuthMode = "login" | "register";
 
 export default function Authentication() {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        navigate("/");
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +43,7 @@ export default function Authentication() {
 
       if (error) throw error;
 
+      navigate("/");
       setSuccess("Logged in successfully!");
       setEmail("");
       setPassword("");
@@ -104,7 +122,7 @@ export default function Authentication() {
                 <label className="label">
                   <span className="label-text">Email</span>
                 </label>
-                <label className="input input-bordered flex items-center gap-2">
+                <label className="input input-bordered w-full flex items-center gap-2">
                   <Mail size={18} />
                   <input
                     type="email"
@@ -121,7 +139,7 @@ export default function Authentication() {
                 <label className="label">
                   <span className="label-text">Password</span>
                 </label>
-                <label className="input input-bordered flex items-center gap-2">
+                <label className="input input-bordered w-full flex items-center gap-2">
                   <Lock size={18} />
                   <input
                     type="password"

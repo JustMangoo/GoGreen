@@ -3,11 +3,13 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router";
 import "./style.css";
 import Home from "./pages/Home.tsx";
-import Profile from "./pages/Profile.tsx";
+import Account from "./pages/Account.tsx";
 import MethodList from "./pages/MethodList.tsx";
+import MethodCategories from "./pages/MethodCategories.tsx";
 import MethodDetails from "./pages/MethodDetails.tsx";
 import Authentication from "./pages/Authentication.tsx";
 import Navbar from "./components/Layout/Navbar.tsx";
+import TopBar from "./components/Layout/TopBar.tsx";
 import ProtectedRoute from "./components/Layout/ProtectedRoute.tsx";
 
 createRoot(document.getElementById("root")!).render(
@@ -30,12 +32,20 @@ createRoot(document.getElementById("root")!).render(
                 path="/profile"
                 element={
                   <ProtectedRoute>
-                    <Profile />
+                    <Account />
                   </ProtectedRoute>
                 }
               />
               <Route
                 path="/methods"
+                element={
+                  <ProtectedRoute>
+                    <MethodCategories />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/methods-list"
                 element={
                   <ProtectedRoute>
                     <MethodList />
@@ -57,6 +67,7 @@ createRoot(document.getElementById("root")!).render(
               path="/"
               element={
                 <ProtectedRoute>
+                  <TopBar />
                   <Navbar />
                 </ProtectedRoute>
               }
@@ -71,6 +82,14 @@ createRoot(document.getElementById("root")!).render(
             />
             <Route
               path="/methods"
+              element={
+                <ProtectedRoute>
+                  <Navbar />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/methods-list"
               element={
                 <ProtectedRoute>
                   <Navbar />

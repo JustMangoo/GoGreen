@@ -1,5 +1,11 @@
 import { supabase } from "../lib/supabaseClient";
 
+export interface Step {
+  order: number;
+  title: string;
+  description: string;
+}
+
 export interface Method {
   id: string;
   title: string;
@@ -7,6 +13,7 @@ export interface Method {
   duration: string;
   category: string;
   image_url?: string;
+  steps?: Step[];
   created_at?: string;
   [key: string]: any;
 }
