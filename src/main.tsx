@@ -12,98 +12,76 @@ import Navbar from "./components/Layout/Navbar.tsx";
 import TopBar from "./components/Layout/TopBar.tsx";
 import ProtectedRoute from "./components/Layout/ProtectedRoute.tsx";
 
+const protectedPages = [
+  "/",
+  "/profile",
+  "/methods",
+  "/methods-list",
+  "/method-details",
+];
+
+const pageComponents: Record<string, React.ComponentType> = {
+  "/": Home,
+  "/profile": Account,
+  "/methods": MethodCategories,
+  "/methods-list": MethodList,
+  "/method-details": MethodDetails,
+};
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <div className="mx-auto max-w-[430px]">
-        <div className=" flex flex-col">
+        <div className="flex flex-col h-screen">
+          {/* Top Bar - Outside scroll container */}
+          <Routes>
+            {protectedPages.map((path) => (
+              <Route
+                key={`topbar-${path}`}
+                path={path}
+                element={
+                  <ProtectedRoute>
+                    <TopBar />
+                  </ProtectedRoute>
+                }
+              />
+            ))}
+          </Routes>
+
+          {/* Main Content - Scrollable */}
           <div className="flex-1 overflow-auto">
             <Routes>
               <Route path="/auth" element={<Authentication />} />
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <Home />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <Account />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/methods"
-                element={
-                  <ProtectedRoute>
-                    <MethodCategories />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/methods-list"
-                element={
-                  <ProtectedRoute>
-                    <MethodList />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/method-details"
-                element={
-                  <ProtectedRoute>
-                    <MethodDetails />
-                  </ProtectedRoute>
-                }
-              />
+              {protectedPages.map((path) => {
+                const Component = pageComponents[path];
+                return (
+                  <Route
+                    key={`content-${path}`}
+                    path={path}
+                    element={
+                      <ProtectedRoute>
+                        <Component />
+                      </ProtectedRoute>
+                    }
+                  />
+                );
+              })}
             </Routes>
           </div>
+
+          {/* Bottom Navigation */}
           <Routes>
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <TopBar />
-                  <Navbar />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Navbar />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/methods"
-              element={
-                <ProtectedRoute>
-                  <Navbar />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/methods-list"
-              element={
-                <ProtectedRoute>
-                  <Navbar />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/method-details"
-              element={
-                <ProtectedRoute>
-                  <Navbar />
-                </ProtectedRoute>
-              }
-            />
+            {protectedPages.map((path) => (
+              <Route
+                key={`navbar-${path}`}
+                path={path}
+                element={
+                  <ProtectedRoute>
+                    <Navbar />
+                  </ProtectedRoute>
+                }
+              />
+            ))}
           </Routes>
         </div>
       </div>

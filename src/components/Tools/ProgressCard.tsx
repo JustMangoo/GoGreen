@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 
 type ProgressCardProps = {
   icon: LucideIcon;
-  iconBgColor?: string;
   heading: string;
   subheading: string;
   progressLabel?: string;
@@ -15,7 +14,6 @@ type ProgressCardProps = {
 
 export default function ProgressCard({
   icon: Icon,
-  iconBgColor = "bg-primary",
   heading,
   subheading,
   progressLabel,
@@ -27,11 +25,11 @@ export default function ProgressCard({
   const progressPercentage = (progressCurrent / progressMax) * 100;
 
   return (
-    <div className="card card-border bg-base-100 w-full max-w-md p-3 space-y-4">
+    <div className="card card-border bg-base-100 w-full max-w-md p-3 gap-4">
       {/* Header */}
       <div className="flex flex-row items-center gap-3">
         <div
-          className={`flex justify-center items-center ${iconBgColor} text-white rounded-box w-12 h-12`}
+          className={`flex justify-center items-center bg-base-200 text-primary rounded-box w-12 h-12`}
         >
           <Icon />
         </div>

@@ -4,7 +4,7 @@ interface PopupProps {
   isOpen: boolean;
   onClose: () => void;
   heading: string;
-  description: string;
+  body: string;
   primaryAction: {
     label: string;
     onClick: () => void;
@@ -21,7 +21,7 @@ export default function Popup({
   isOpen,
   onClose,
   heading,
-  description,
+  body,
   primaryAction,
   secondaryAction,
   primaryButtonClass = "btn-primary",
@@ -43,7 +43,7 @@ export default function Popup({
 
           {/* Content */}
           <h3 className="font-bold text-lg">{heading}</h3>
-          <p className="py-4 text-sm text-base-content/70">{description}</p>
+          <div className="py-4 text-sm text-base-content/70">{body}</div>
 
           {/* Action Buttons */}
           <div className="modal-action gap-2">

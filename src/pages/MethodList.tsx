@@ -88,19 +88,17 @@ export default function MethodList() {
         </button>
       )}
 
-      {showForm && (
-        <AddMethodForm
-          onSuccess={() => {
-            setShowForm(false);
-            setLoading(true);
-            listMethods()
-              .then(setMethods)
-              .catch((fetchError) => setError(fetchError.message))
-              .finally(() => setLoading(false));
-          }}
-          onCancel={() => setShowForm(false)}
-        />
-      )}
+      <AddMethodForm
+        isOpen={showForm}
+        onClose={() => setShowForm(false)}
+        onSuccess={() => {
+          setLoading(true);
+          listMethods()
+            .then(setMethods)
+            .catch((fetchError) => setError(fetchError.message))
+            .finally(() => setLoading(false));
+        }}
+      />
 
       {loading && <div className="loading loading-spinner loading-lg"></div>}
       {(error || saveError) && (
@@ -128,14 +126,14 @@ export default function MethodList() {
                   className="w-full h-full object-cover"
                 />
               </figure>
-              <div className="card-body p-3">
+              <div className="card-body p-3 items-start">
                 <h2 className="card-title text-sm line-clamp-2">
                   {method.title}
                 </h2>
-                <div className="text-xs opacity-80">{method.duration}</div>
-                <div className="card-actions items-baseline justify-between mt-auto">
+
+                <div className="card-actions w-full items-baseline justify-between mt-auto">
                   <div className="bg-base-200 rounded-box px-2 py-1 w-fit">
-                    <p className="text-xs text-neutral">{method.category}</p>
+                    <p className="text-xs text-neutral">{method.duration}</p>
                   </div>
                   <button
                     onClick={(e) => {

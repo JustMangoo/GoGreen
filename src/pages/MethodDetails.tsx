@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { listMethods } from "../services/methods";
 import type { Method } from "../services/methods";
 import { useSavedMethods } from "../hooks/useSavedMethods";
-import { ArrowLeft, Heart, Clock, Tag } from "lucide-react";
+import { completeMethod } from "../services/achievementOperations";
+import { supabase } from "../lib/supabaseClient";
+import { ArrowLeft, Heart, Clock, Tag, Trophy } from "lucide-react";
 
 export default function MethodDetails() {
   const [searchParams] = useSearchParams();
@@ -13,7 +15,35 @@ export default function MethodDetails() {
   const [method, setMethod] = useState<Method | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mastering, setMastering] = useState(false);
+  const [masteringSuccess, setMasteringSuccess] = useState(false);
   const { savedIds, savingId, toggleSave } = useSavedMethods();
+
+  const handleMasterMethod = async () => {
+    if (!method || !methodId) return;
+
+    setMastering(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        alert("You need to be logged in to master a method");
+        return;
+      }
+
+      await completeMethod(user.id, Number(methodId), "", undefined);
+      setMasteringSuccess(true);
+      setTimeout(() => setMasteringSuccess(false), 3000);
+    } catch (err) {
+      alert(
+        "Failed to master method: " +
+          (err instanceof Error ? err.message : "Unknown error")
+      );
+    } finally {
+      setMastering(false);
+    }
+  };
 
   useEffect(() => {
     let abort = false;
@@ -165,6 +195,18 @@ export default function MethodDetails() {
           <p>Created on {new Date(method.created_at).toLocaleDateString()}</p>
         </div>
       )}
+
+      {/* Master Method Button */}
+      <button
+        onClick={handleMasterMethod}
+        disabled={mastering}
+        className={`btn btn-lg w-full gap-2 ${
+          masteringSuccess ? "btn-success" : "btn-primary"
+        } mb-4`}
+      >
+        <Trophy size={20} />
+        {masteringSuccess ? "Method Mastered! ✓" : "Master This Method"}
+      </button>
     </div>
   );
 }

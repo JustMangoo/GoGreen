@@ -63,16 +63,13 @@ export default function MethodCategories() {
             <button
               key={category.name}
               onClick={() => handleCategoryClick(category.name)}
-              className="card bg-linear-to-br from-primary/20 to-primary/10 hover:shadow-lg transition-shadow cursor-pointer"
+              className="card items-center justify-center min-h-[175px] bg-primary/10 card-border  hover:shadow-lg transition-shadow cursor-pointer"
             >
-              <div className="card-body items-center text-center p-6">
-                <h2 className="card-title text-xl mb-2">{category.name}</h2>
-                <p className="text-sm opacity-70">
+              <div className="card-body grow-0 items-center justify-center text-center p-6 gap-4">
+                <h2 className="card-title text-xl">{category.name}</h2>
+                <p className="text-sm opacity-70 h-fit">
                   {category.count} method{category.count !== 1 ? "s" : ""}
                 </p>
-                <div className="card-actions mt-4">
-                  <button className="btn btn-sm btn-primary">Explore</button>
-                </div>
               </div>
             </button>
           ))}

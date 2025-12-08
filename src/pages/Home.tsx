@@ -1,18 +1,23 @@
 import ProgressCard from "../components/Tools/ProgressCard";
 import Popup from "../components/Tools/Popup";
+import { supabase } from "../lib/supabaseClient";
 import { TrendingUp, Award, BookOpen, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { useSavedMethods } from "../hooks/useSavedMethods";
 import { listMethods } from "../services/methods";
 import { removeSavedMethod } from "../services/savedMethods";
 import type { Method } from "../services/methods";
+import { getLevelTier } from "../constants/levels";
 
 export default function Home() {
   const [savedMethods, setSavedMethods] = useState<Method[]>([]);
   const [popupOpen, setPopupOpen] = useState(false);
   const [methodToRemove, setMethodToRemove] = useState<Method | null>(null);
-  const [removing, setRemoving] = useState(false);
+  const [points, setPoints] = useState(0);
   const { savedIds } = useSavedMethods();
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     let abort = false;
@@ -47,7 +52,6 @@ export default function Home() {
   const handleConfirmRemove = async () => {
     if (!methodToRemove) return;
 
-    setRemoving(true);
     try {
       const user = (
         await import("../lib/supabaseClient")
@@ -60,30 +64,50 @@ export default function Home() {
     } catch (error) {
       console.error("Error removing saved method:", error);
     } finally {
-      setRemoving(false);
       setPopupOpen(false);
       setMethodToRemove(null);
     }
   };
+
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData.user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("points")
+            .eq("id", userData.user.id)
+            .single();
+
+          if (profile) {
+            setPoints(profile.points || 0);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading profile:", error);
+      }
+    };
+
+    loadUserProfile();
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 gap-4">
       {/* Level Card */}
       <ProgressCard
         icon={TrendingUp}
-        iconBgColor="bg-primary"
         heading="Level"
-        subheading="Pickling Beginner"
+        subheading={getLevelTier(points).name}
         progressLabel="Next Level"
-        progressCurrent={125}
-        progressMax={250}
+        progressCurrent={points}
+        progressMax={getLevelTier(points).maxPoints}
         showProgressBar={true}
       />
 
       {/* Learned Methods Card */}
       <ProgressCard
         icon={BookOpen}
-        iconBgColor="bg-primary"
         heading="Mastered Methods"
         subheading="5 / 10"
         progressLabel="Progress"
@@ -95,7 +119,6 @@ export default function Home() {
       {/* Achievements Card */}
       <ProgressCard
         icon={Award}
-        iconBgColor="bg-primary"
         heading="Achievements"
         subheading="2 / 3"
         progressLabel="Unlocked"
@@ -105,12 +128,10 @@ export default function Home() {
       />
 
       {/* Saved Methods List */}
-      <div className="card card-border p-3 w-full max-w-md space-y-3">
+      <div className=" card card-border bg-base-100 w-full max-w-md p-3 gap-4">
         <div className="flex items-center gap-2">
-          <div
-            className={`flex justify-center items-center bg-primary text-white rounded-box w-12 h-12`}
-          >
-            <Heart />
+          <div className="flex justify-center items-center bg-base-200 text-primary rounded-box w-12 h-12">
+            <Heart size={20} />
           </div>
           <h3 className="font-semibold text-lg">Saved Methods</h3>
         </div>
@@ -119,36 +140,38 @@ export default function Home() {
             No saved methods yet. Start saving methods to see them here!
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-3">
             {savedMethods.map((method) => (
-              <div
+              <button
                 key={method.id}
-                className="card bg-base-100  flex flex-row items-center gap-3 hover:bg-base-200 transition-colors cursor-pointer"
+                onClick={() => navigate(`/method-details?id=${method.id}`)}
+                className="card image-full h-24 hover:shadow-lg transition-shadow text-left group relative overflow-hidden"
+                style={{
+                  backgroundImage: `url(${
+                    method.image_url || "https://placehold.co/400x300"
+                  })`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
               >
-                {method.image_url ? (
-                  <img
-                    src={method.image_url}
-                    alt={method.title}
-                    className="w-12 h-12 rounded-box object-cover"
-                  />
-                ) : (
-                  <div className="w-12 h-12 bg-base-200 rounded-box flex items-center justify-center">
-                    <BookOpen size={20} />
-                  </div>
-                )}
-                <div className="flex-1">
-                  <p className="font-medium text-sm">{method.title}</p>
-                  <p className="text-xs text-base-content/60">
-                    {method.category}
+                <div className="bg-black/40 w-full h-full flex flex-col justify-between p-3">
+                  <p className="font-semibold text-sm line-clamp-2 text-white">
+                    {method.title}
                   </p>
+                  <div className="bg-base-200 rounded-box px-2 py-1 w-fit">
+                    <p className="text-xs text-neutral">{method.category}</p>
+                  </div>
                 </div>
                 <button
-                  onClick={() => handleRemoveClick(method)}
-                  className="btn btn-ghost btn-xs p-0 hover:text-error"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveClick(method);
+                  }}
+                  className="btn btn-ghost btn-xs p-0 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  <Heart className="text-neutral fill-neutral" size={18} />
+                  <Heart className="text-error fill-error" size={16} />
                 </button>
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -159,7 +182,7 @@ export default function Home() {
         isOpen={popupOpen}
         onClose={() => setPopupOpen(false)}
         heading="Remove Saved Method?"
-        description={`Are you sure you want to remove "${methodToRemove?.title}" from your saved methods?`}
+        body={`Are you sure you want to remove "${methodToRemove?.title}" from your saved methods?`}
         primaryAction={{
           label: "Remove",
           onClick: handleConfirmRemove,
