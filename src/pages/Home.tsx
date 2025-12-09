@@ -1,5 +1,4 @@
 import ProgressCard from "../components/Tools/ProgressCard";
-import Popup from "../components/Tools/Popup";
 import { TrendingUp, Award, BookOpen, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -7,19 +6,16 @@ import { supabase } from "../lib/supabaseClient";
 import { useSavedMethods } from "../hooks/useSavedMethods";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { listMethods } from "../services/methods";
-import { removeSavedMethod } from "../services/savedMethods";
 import {
   getUserAchievements,
   getCompletedMethodsCount,
 } from "../services/achievementOperations";
 import { Achievements } from "../constants/achievements";
 import type { Method } from "../services/methods";
-import { getLevelTier, getNextLevelTier } from "../constants/levels";
+import { getLevelTier } from "../constants/levels";
 
 export default function Home() {
   const [savedMethods, setSavedMethods] = useState<Method[]>([]);
-  const [popupOpen, setPopupOpen] = useState(false);
-  const [methodToRemove, setMethodToRemove] = useState<Method | null>(null);
   const [achievementsEarned, setAchievementsEarned] = useState(0);
   const [achievementsLoading, setAchievementsLoading] = useState(true);
   const [completedCount, setCompletedCount] = useState(0);
@@ -114,33 +110,8 @@ export default function Home() {
     };
   }, []);
 
-  const handleRemoveClick = (method: Method) => {
-    setMethodToRemove(method);
-    setPopupOpen(true);
-  };
-
-  const handleConfirmRemove = async () => {
-    if (!methodToRemove) return;
-
-    try {
-      const user = (
-        await import("../lib/supabaseClient")
-      ).supabase.auth.getUser();
-      const { data: userData } = await user;
-      if (userData.user) {
-        await removeSavedMethod(userData.user.id, Number(methodToRemove.id));
-        setSavedMethods(savedMethods.filter((m) => m.id !== methodToRemove.id));
-      }
-    } catch (error) {
-      console.error("Error removing saved method:", error);
-    } finally {
-      setPopupOpen(false);
-      setMethodToRemove(null);
-    }
-  };
-
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen p-4 gap-4">
+    <div className="flex flex-col items-center justify-start min-h-screen bg-base-100 p-4 gap-4">
       {/* Level Card */}
       <ProgressCard
         icon={TrendingUp}
@@ -148,24 +119,26 @@ export default function Home() {
         subheading={getLevelTier(points).name}
         progressLabel="Next Level"
         progressCurrent={points}
-        progressMax={getNextLevelTier(points)?.maxPoints}
+        progressMax={getLevelTier(points).maxPoints}
         showProgressBar={true}
       />
 
       {/* Learned Methods Card */}
-      <ProgressCard
-        icon={BookOpen}
-        heading="Mastered Methods"
-        subheading={
-          completedLoading
-            ? "Loading..."
-            : `${completedCount} / ${totalMethods}`
-        }
-        progressLabel="Completed"
-        progressCurrent={completedCount}
-        progressMax={Math.max(totalMethods, 1)}
-        showProgressBar={true}
-      />
+      <button onClick={() => navigate("/methods")} className="w-full">
+        <ProgressCard
+          icon={BookOpen}
+          heading="Mastered Methods"
+          subheading={
+            completedLoading
+              ? "Loading..."
+              : `${completedCount} / ${totalMethods}`
+          }
+          progressLabel="Completed"
+          progressCurrent={completedCount}
+          progressMax={Math.max(totalMethods, 1)}
+          showProgressBar={true}
+        />
+      </button>
 
       {/* Achievements Card */}
       <button onClick={() => navigate("/achievements")} className="w-full">
@@ -185,9 +158,9 @@ export default function Home() {
       </button>
 
       {/* Saved Methods List */}
-      <div className=" card card-border bg-base-100 w-full max-w-md p-3 gap-4">
+      <div className=" card card-border border-base-300 bg-base-200 w-full max-w-md p-3 gap-4">
         <div className="flex items-center gap-2">
-          <div className="flex justify-center items-center bg-base-200 text-primary rounded-box w-12 h-12">
+          <div className="flex justify-center items-center border-base-300 border-2 bg-base-100 text-primary rounded-box w-12 h-12">
             <Heart size={20} />
           </div>
           <h3 className="font-semibold text-lg">Saved Methods</h3>
@@ -215,41 +188,15 @@ export default function Home() {
                   <p className="font-semibold text-sm line-clamp-2 text-white">
                     {method.title}
                   </p>
-                  <div className="bg-base-200 rounded-box px-2 py-1 w-fit">
+                  <div className="bg-base-100 rounded-box px-2 py-1 w-fit">
                     <p className="text-xs text-neutral">{method.category}</p>
                   </div>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveClick(method);
-                  }}
-                  className="btn btn-ghost btn-xs p-0 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Heart className="text-error fill-error" size={16} />
-                </button>
               </button>
             ))}
           </div>
         )}
       </div>
-
-      {/* Confirmation Popup */}
-      <Popup
-        isOpen={popupOpen}
-        onClose={() => setPopupOpen(false)}
-        heading="Remove Saved Method?"
-        body={`Are you sure you want to remove "${methodToRemove?.title}" from your saved methods?`}
-        primaryAction={{
-          label: "Remove",
-          onClick: handleConfirmRemove,
-        }}
-        secondaryAction={{
-          label: "Cancel",
-          onClick: () => setPopupOpen(false),
-        }}
-        primaryButtonClass="btn-error"
-      />
     </div>
   );
 }

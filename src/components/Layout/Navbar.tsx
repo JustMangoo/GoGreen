@@ -1,5 +1,5 @@
 import { NavLink } from "react-router";
-import { Home, LayoutList, User } from "lucide-react";
+import { Home, BookOpen, User } from "lucide-react";
 
 export default function Navbar() {
   return (
@@ -8,30 +8,36 @@ export default function Navbar() {
         <NavLink
           to="/"
           className={({ isActive }: { isActive: boolean }) =>
-            `btn btn-ghost flex-col gap-0 ${isActive ? "text-primary" : ""}`
+            `btn btn-ghost h-fit py-2 flex-col gap-0 ${
+              isActive ? "text-primary" : ""
+            }`
           }
         >
-          <Home size={32} />
+          <Home size={28} />
           <span className="text-xs">Home</span>
         </NavLink>
 
         <NavLink
           to="/methods"
           className={({ isActive }: { isActive: boolean }) =>
-            `btn btn-ghost flex-col gap-0 ${isActive ? "text-primary" : ""}`
+            `btn btn-ghost h-fit py-2 flex-col gap-0 ${
+              isActive ? "text-primary" : ""
+            }`
           }
         >
-          <LayoutList size={32} />
+          <BookOpen size={28} />
           <span className="text-xs">Methods</span>
         </NavLink>
 
         <NavLink
           to="/profile"
           className={({ isActive }: { isActive: boolean }) =>
-            `btn btn-ghost flex-col gap-0 ${isActive ? "text-primary" : ""}`
+            `btn btn-ghost h-fit py-2 flex-col gap-0 ${
+              isActive ? "text-primary" : ""
+            }`
           }
         >
-          <User size={32} />
+          <User size={28} />
           <span className="text-xs">Profile</span>
         </NavLink>
       </div>

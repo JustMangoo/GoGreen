@@ -15,7 +15,7 @@ type ProgressCardProps = {
 export default function ProgressCard({
   icon: Icon,
   heading,
-  subheading,
+  subheading = "",
   progressLabel,
   progressCurrent = 0,
   progressMax = 100,
@@ -25,11 +25,11 @@ export default function ProgressCard({
   const progressPercentage = (progressCurrent / progressMax) * 100;
 
   return (
-    <div className="card card-border bg-base-100 w-full max-w-md p-3 gap-4">
+    <div className="card card-border border-base-300 bg-base-200 w-full max-w-md p-3 gap-4">
       {/* Header */}
       <div className="flex flex-row items-center gap-3">
         <div
-          className={`flex justify-center items-center bg-base-200 text-primary rounded-box w-12 h-12`}
+          className={`flex justify-center items-center border-base-300 border-2 bg-base-100 text-primary rounded-box w-12 h-12`}
         >
           <Icon />
         </div>
@@ -48,7 +48,7 @@ export default function ProgressCard({
               {progressCurrent}/{progressMax}
             </p>
           </div>
-          <div className="flex h-2 bg-base-200 rounded-box overflow-hidden">
+          <div className="flex h-2 bg-base-300 rounded-box overflow-hidden">
             <div
               className="bg-primary h-full rounded-box transition-all duration-300"
               style={{ width: `${progressPercentage}%` }}

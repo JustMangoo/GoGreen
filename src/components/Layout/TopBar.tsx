@@ -9,7 +9,7 @@ export default function TopBar() {
   const currentTier = getLevelTier(points);
 
   return (
-    <header className="w-full flex justify-between py-3 px-4 sticky top-0 border-b border-base-300 bg-base-100 shadow-lg">
+    <header className="w-full flex justify-between py-3 px-4 sticky top-0 border-b border-base-300 bg-base-100 shadow-lg shadow-neutral/5">
       <div className="flex flex-col justify-center">
         <h1 className="font-bold text-sm">{currentTier.name}</h1>
         <p className="text-xs text-base-content/60">
