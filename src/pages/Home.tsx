@@ -1,23 +1,31 @@
 import ProgressCard from "../components/Tools/ProgressCard";
 import Popup from "../components/Tools/Popup";
-import { supabase } from "../lib/supabaseClient";
 import { TrendingUp, Award, BookOpen, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { supabase } from "../lib/supabaseClient";
 import { useSavedMethods } from "../hooks/useSavedMethods";
+import { useUserProfile } from "../hooks/useUserProfile";
 import { listMethods } from "../services/methods";
 import { removeSavedMethod } from "../services/savedMethods";
+import { getUserAchievements } from "../services/achievementOperations";
+import { Achievements } from "../constants/achievements";
 import type { Method } from "../services/methods";
-import { getLevelTier } from "../constants/levels";
+import { getLevelTier, getNextLevelTier } from "../constants/levels";
 
 export default function Home() {
   const [savedMethods, setSavedMethods] = useState<Method[]>([]);
   const [popupOpen, setPopupOpen] = useState(false);
   const [methodToRemove, setMethodToRemove] = useState<Method | null>(null);
-  const [points, setPoints] = useState(0);
+  const [achievementsEarned, setAchievementsEarned] = useState(0);
+  const [achievementsLoading, setAchievementsLoading] = useState(true);
   const { savedIds } = useSavedMethods();
+  const { profile } = useUserProfile();
+
+  const achievementsTotal = Achievements.length;
 
   const navigate = useNavigate();
+  const points = profile?.points || 0;
 
   useEffect(() => {
     let abort = false;
@@ -44,6 +52,33 @@ export default function Home() {
     }
   }, [savedIds]);
 
+  useEffect(() => {
+    let abort = false;
+
+    const loadAchievements = async () => {
+      setAchievementsLoading(true);
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) return;
+
+        const earnedIds = await getUserAchievements(userData.user.id);
+        if (!abort) {
+          setAchievementsEarned(earnedIds.length);
+        }
+      } catch (error) {
+        console.error("Error loading achievements:", error);
+      } finally {
+        if (!abort) setAchievementsLoading(false);
+      }
+    };
+
+    loadAchievements();
+
+    return () => {
+      abort = true;
+    };
+  }, []);
+
   const handleRemoveClick = (method: Method) => {
     setMethodToRemove(method);
     setPopupOpen(true);
@@ -69,29 +104,6 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    const loadUserProfile = async () => {
-      try {
-        const { data: userData } = await supabase.auth.getUser();
-        if (userData.user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("points")
-            .eq("id", userData.user.id)
-            .single();
-
-          if (profile) {
-            setPoints(profile.points || 0);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading profile:", error);
-      }
-    };
-
-    loadUserProfile();
-  }, []);
-
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 gap-4">
       {/* Level Card */}
@@ -101,7 +113,7 @@ export default function Home() {
         subheading={getLevelTier(points).name}
         progressLabel="Next Level"
         progressCurrent={points}
-        progressMax={getLevelTier(points).maxPoints}
+        progressMax={getNextLevelTier(points)?.maxPoints}
         showProgressBar={true}
       />
 
@@ -117,15 +129,21 @@ export default function Home() {
       />
 
       {/* Achievements Card */}
-      <ProgressCard
-        icon={Award}
-        heading="Achievements"
-        subheading="2 / 3"
-        progressLabel="Unlocked"
-        progressCurrent={2}
-        progressMax={3}
-        showProgressBar={true}
-      />
+      <button onClick={() => navigate("/achievements")} className="w-full">
+        <ProgressCard
+          icon={Award}
+          heading="Achievements"
+          subheading={
+            achievementsLoading
+              ? "Loading..."
+              : `${achievementsEarned} / ${achievementsTotal}`
+          }
+          progressLabel="Unlocked"
+          progressCurrent={achievementsEarned}
+          progressMax={achievementsTotal}
+          showProgressBar={true}
+        />
+      </button>
 
       {/* Saved Methods List */}
       <div className=" card card-border bg-base-100 w-full max-w-md p-3 gap-4">

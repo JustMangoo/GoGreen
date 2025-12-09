@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import { listMethods } from "../services/methods";
 import type { Method } from "../services/methods";
 import { useSavedMethods } from "../hooks/useSavedMethods";
-import { completeMethod } from "../services/achievementOperations";
+import { useUserProfile } from "../hooks/useUserProfile";
+import {
+  completeMethod,
+  isMethodCompleted,
+} from "../services/achievementOperations";
 import { supabase } from "../lib/supabaseClient";
 import { ArrowLeft, Heart, Clock, Tag, Trophy } from "lucide-react";
 
@@ -17,7 +21,9 @@ export default function MethodDetails() {
   const [error, setError] = useState<string | null>(null);
   const [mastering, setMastering] = useState(false);
   const [masteringSuccess, setMasteringSuccess] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
   const { savedIds, savingId, toggleSave } = useSavedMethods();
+  const { refetchProfile } = useUserProfile();
 
   const handleMasterMethod = async () => {
     if (!method || !methodId) return;
@@ -33,7 +39,12 @@ export default function MethodDetails() {
       }
 
       await completeMethod(user.id, Number(methodId), "", undefined);
+      setIsCompleted(true);
       setMasteringSuccess(true);
+
+      // Refetch user profile to update points
+      await refetchProfile();
+
       setTimeout(() => setMasteringSuccess(false), 3000);
     } catch (err) {
       alert(
@@ -60,6 +71,20 @@ export default function MethodDetails() {
           setError("Method not found");
         } else {
           setMethod(found);
+
+          // Check if method is completed
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (user && found.id) {
+            const completed = await isMethodCompleted(
+              user.id,
+              Number(found.id)
+            );
+            if (!abort) {
+              setIsCompleted(completed);
+            }
+          }
         }
       } catch (err) {
         if (!abort) {
@@ -131,12 +156,14 @@ export default function MethodDetails() {
           <button
             onClick={() => toggleSave(String(method.id))}
             disabled={savingId === String(method.id)}
-            className="btn btn-sm btn-circle"
+            className="btn btn-ghost btn-circle"
           >
             <Heart
               size={20}
               className={
-                savedIds.has(String(method.id)) ? "fill-current text-error" : ""
+                savedIds.has(String(method.id))
+                  ? "fill-current text-primary"
+                  : ""
               }
             />
           </button>
@@ -199,13 +226,21 @@ export default function MethodDetails() {
       {/* Master Method Button */}
       <button
         onClick={handleMasterMethod}
-        disabled={mastering}
+        disabled={mastering || isCompleted}
         className={`btn btn-lg w-full gap-2 ${
-          masteringSuccess ? "btn-success" : "btn-primary"
+          isCompleted
+            ? "btn-disabled"
+            : masteringSuccess
+            ? "btn-success"
+            : "btn-primary"
         } mb-4`}
       >
         <Trophy size={20} />
-        {masteringSuccess ? "Method Mastered! ✓" : "Master This Method"}
+        {isCompleted
+          ? "Method Completed ✓"
+          : masteringSuccess
+          ? "Method Mastered! ✓"
+          : "Master This Method"}
       </button>
     </div>
   );

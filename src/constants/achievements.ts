@@ -7,7 +7,7 @@ export interface Achievement {
   requirement: string;
 }
 
-export const ACHIEVEMENTS: Achievement[] = [
+export const Achievements: Achievement[] = [
   {
     id: "first-save",
     name: "Quick Save",
@@ -77,32 +77,32 @@ export function checkEarneAchievements(
 
   // First save
   if (progress.savedMethods >= 1) {
-    earned.push(ACHIEVEMENTS.find((a) => a.id === "first-save")!);
+    earned.push(Achievements.find((a) => a.id === "first-save")!);
   }
 
   // Save collector (10 methods)
   if (progress.savedMethods >= 10) {
-    earned.push(ACHIEVEMENTS.find((a) => a.id === "save-collector")!);
+    earned.push(Achievements.find((a) => a.id === "save-collector")!);
   }
 
   // First completion
   if (progress.completedMethods >= 1) {
-    earned.push(ACHIEVEMENTS.find((a) => a.id === "first-completion")!);
+    earned.push(Achievements.find((a) => a.id === "first-completion")!);
   }
 
   // Category master (complete all in one category)
   if (progress.completedCategoryCount >= 1) {
-    earned.push(ACHIEVEMENTS.find((a) => a.id === "category-master")!);
+    earned.push(Achievements.find((a) => a.id === "category-master")!);
   }
 
   // Multi-category (3 categories completed)
   if (progress.completedCategories.length >= 3) {
-    earned.push(ACHIEVEMENTS.find((a) => a.id === "multi-category")!);
+    earned.push(Achievements.find((a) => a.id === "multi-category")!);
   }
 
   // Master preserver (all methods)
   if (progress.learnedAllMethods) {
-    earned.push(ACHIEVEMENTS.find((a) => a.id === "master-preserver")!);
+    earned.push(Achievements.find((a) => a.id === "master-preserver")!);
   }
 
   return earned;
@@ -118,7 +118,7 @@ export function getNextAchievement(
   const earnedIds = earned.map((a) => a.id);
 
   return (
-    ACHIEVEMENTS.find((achievement) => !earnedIds.includes(achievement.id)) ||
+    Achievements.find((achievement) => !earnedIds.includes(achievement.id)) ||
     null
   );
 }

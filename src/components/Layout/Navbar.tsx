@@ -3,7 +3,7 @@ import { Home, LayoutList, User } from "lucide-react";
 
 export default function Navbar() {
   return (
-    <nav className="navbar fixed bottom-0 border-t border-base-300 bg-base-100 shadow-lg">
+    <nav className="navbar sticky bottom-0 border-t border-base-300 bg-base-100 shadow-lg">
       <div className="navbar-center flex w-full justify-around">
         <NavLink
           to="/"

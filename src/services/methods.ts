@@ -43,6 +43,6 @@ export async function listMethods(userId?: string): Promise<Method[]> {
     console.error("Error fetching methods:", error);
     throw error;
   }
-  console.log("Fetched methods:", data);
+
   return data;
 }

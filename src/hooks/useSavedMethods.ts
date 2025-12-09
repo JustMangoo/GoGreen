@@ -44,7 +44,6 @@ export function useSavedMethods() {
       try {
         const ids = await getSavedMethodIds(uid);
         if (!abort) {
-          console.log("Loaded saved method IDs:", ids);
           setSavedIds(new Set(ids));
         }
       } catch (err) {

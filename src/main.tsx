@@ -7,6 +7,7 @@ import Account from "./pages/Account.tsx";
 import MethodList from "./pages/MethodList.tsx";
 import MethodCategories from "./pages/MethodCategories.tsx";
 import MethodDetails from "./pages/MethodDetails.tsx";
+import Achievements from "./pages/Achievements.tsx";
 import Authentication from "./pages/Authentication.tsx";
 import Navbar from "./components/Layout/Navbar.tsx";
 import TopBar from "./components/Layout/TopBar.tsx";
@@ -18,6 +19,7 @@ const protectedPages = [
   "/methods",
   "/methods-list",
   "/method-details",
+  "/achievements",
 ];
 
 const pageComponents: Record<string, React.ComponentType> = {
@@ -26,6 +28,7 @@ const pageComponents: Record<string, React.ComponentType> = {
   "/methods": MethodCategories,
   "/methods-list": MethodList,
   "/method-details": MethodDetails,
+  "/achievements": Achievements,
 };
 
 createRoot(document.getElementById("root")!).render(

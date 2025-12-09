@@ -32,11 +32,10 @@ export async function awardAchievement(
   }
 
   // Add points to profile
-  const { error: updateError } = await supabase
-    .rpc("add_user_points", {
-      user_id: userId,
-      points: pointsReward,
-    });
+  const { error: updateError } = await supabase.rpc("add_user_points", {
+    p_user_id: userId,
+    p_points: pointsReward,
+  });
 
   if (updateError) throw updateError;
 }
@@ -65,6 +64,14 @@ export async function completeMethod(
   );
 
   if (error) throw error;
+
+  // Award 10 points for completing a method
+  const { error: updateError } = await supabase.rpc("add_user_points", {
+    p_user_id: userId,
+    p_points: 10,
+  });
+
+  if (updateError) throw updateError;
 }
 
 /**
@@ -88,10 +95,9 @@ export async function getCompletedMethodsCount(
 export async function getCompletedCategories(
   userId: string
 ): Promise<string[]> {
-  const { data, error } = await supabase.rpc(
-    "get_completed_categories",
-    { user_id_param: userId }
-  );
+  const { data, error } = await supabase.rpc("get_completed_categories", {
+    p_user_id: userId,
+  });
 
   if (error) throw error;
   return (data || []).map((row: any) => row.category);
@@ -108,10 +114,28 @@ export async function hasLearnedAllMethods(userId: string): Promise<boolean> {
   const totalMethods = methods?.length || 0;
 
   const { data } = await supabase.rpc("get_learned_methods_count", {
-    user_id_param: userId,
+    p_user_id: userId,
   });
 
   const learnedCount = data?.[0]?.count || 0;
 
   return learnedCount >= totalMethods;
+}
+
+/**
+ * Check if a specific method is completed by user
+ */
+export async function isMethodCompleted(
+  userId: string,
+  methodId: number
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("completed_methods")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("method_id", methodId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return !!data;
 }
