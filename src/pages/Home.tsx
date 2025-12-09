@@ -8,7 +8,10 @@ import { useSavedMethods } from "../hooks/useSavedMethods";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { listMethods } from "../services/methods";
 import { removeSavedMethod } from "../services/savedMethods";
-import { getUserAchievements } from "../services/achievementOperations";
+import {
+  getUserAchievements,
+  getCompletedMethodsCount,
+} from "../services/achievementOperations";
 import { Achievements } from "../constants/achievements";
 import type { Method } from "../services/methods";
 import { getLevelTier, getNextLevelTier } from "../constants/levels";
@@ -19,6 +22,9 @@ export default function Home() {
   const [methodToRemove, setMethodToRemove] = useState<Method | null>(null);
   const [achievementsEarned, setAchievementsEarned] = useState(0);
   const [achievementsLoading, setAchievementsLoading] = useState(true);
+  const [completedCount, setCompletedCount] = useState(0);
+  const [completedLoading, setCompletedLoading] = useState(true);
+  const [totalMethods, setTotalMethods] = useState(0);
   const { savedIds } = useSavedMethods();
   const { profile } = useUserProfile();
 
@@ -34,6 +40,8 @@ export default function Home() {
       try {
         const allMethods = await listMethods();
         if (abort) return;
+
+        setTotalMethods(allMethods.length);
 
         // Filter to only saved methods
         const saved = allMethods.filter((method) =>
@@ -73,6 +81,33 @@ export default function Home() {
     };
 
     loadAchievements();
+
+    return () => {
+      abort = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let abort = false;
+
+    const loadCompleted = async () => {
+      setCompletedLoading(true);
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) return;
+
+        const count = await getCompletedMethodsCount(userData.user.id);
+        if (!abort) {
+          setCompletedCount(count);
+        }
+      } catch (error) {
+        console.error("Error loading completed methods:", error);
+      } finally {
+        if (!abort) setCompletedLoading(false);
+      }
+    };
+
+    loadCompleted();
 
     return () => {
       abort = true;
@@ -121,10 +156,14 @@ export default function Home() {
       <ProgressCard
         icon={BookOpen}
         heading="Mastered Methods"
-        subheading="5 / 10"
-        progressLabel="Progress"
-        progressCurrent={5}
-        progressMax={10}
+        subheading={
+          completedLoading
+            ? "Loading..."
+            : `${completedCount} / ${totalMethods}`
+        }
+        progressLabel="Completed"
+        progressCurrent={completedCount}
+        progressMax={Math.max(totalMethods, 1)}
         showProgressBar={true}
       />
 

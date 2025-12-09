@@ -1,5 +1,6 @@
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { getLevelTier } from "../../constants/levels";
+import { NavLink } from "react-router";
 
 export default function TopBar() {
   const { profile, loading } = useUserProfile();
@@ -15,11 +16,13 @@ export default function TopBar() {
           {loading ? "..." : `${points} points`}
         </p>
       </div>
-      <div className="avatar">
-        <div className="w-12 rounded-full">
-          <img src="https://img.daisyui.com/images/profile/demo/yellingcat@192.webp" />
+      <NavLink to="/profile">
+        <div className="avatar">
+          <div className="w-12 rounded-full">
+            <img src="https://img.daisyui.com/images/profile/demo/yellingcat@192.webp" />
+          </div>
         </div>
-      </div>
+      </NavLink>
     </header>
   );
 }
