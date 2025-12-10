@@ -1,4 +1,4 @@
-import { Heart } from "lucide-react";
+import { Heart, ArrowLeft } from "lucide-react";
 import { listMethods } from "../services/methods";
 import { useEffect, useState, useMemo } from "react";
 import type { Method } from "../services/methods";
@@ -112,6 +112,14 @@ export default function MethodList() {
         </div>
       )}
 
+      <button
+        onClick={() => navigate(-1)}
+        className="btn btn-ghost btn-sm self-start"
+      >
+        <ArrowLeft size={20} />
+        Back
+      </button>
+
       <ul className="grid grid-cols-2 gap-3 p-0 bg-base-100 rounded-box w-full">
         {filteredMethods.map((method) => (
           <li key={method.id} className="p-0">
@@ -132,7 +140,7 @@ export default function MethodList() {
                 </h2>
 
                 <div className="card-actions w-full items-baseline justify-between mt-auto">
-                  <div className="bg-base-200 rounded-box px-2 py-1 w-fit">
+                  <div className="bg-base-100 rounded-box px-2 py-1 w-fit">
                     <p className="text-xs text-neutral">{method.duration}</p>
                   </div>
                   <button
@@ -141,7 +149,7 @@ export default function MethodList() {
                       e.stopPropagation();
                       toggleSave(String(method.id));
                     }}
-                    className="btn btn-sm btn-circle"
+                    className="btn btn-sm bg-base-100 btn-circle"
                     disabled={savingId === String(method.id)}
                   >
                     <Heart

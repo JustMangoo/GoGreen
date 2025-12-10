@@ -17,9 +17,7 @@ import { getLevelTier } from "../constants/levels";
 export default function Home() {
   const [savedMethods, setSavedMethods] = useState<Method[]>([]);
   const [achievementsEarned, setAchievementsEarned] = useState(0);
-  const [achievementsLoading, setAchievementsLoading] = useState(true);
   const [completedCount, setCompletedCount] = useState(0);
-  const [completedLoading, setCompletedLoading] = useState(true);
   const [totalMethods, setTotalMethods] = useState(0);
   const { savedIds } = useSavedMethods();
   const { profile } = useUserProfile();
@@ -60,7 +58,6 @@ export default function Home() {
     let abort = false;
 
     const loadAchievements = async () => {
-      setAchievementsLoading(true);
       try {
         const { data: userData } = await supabase.auth.getUser();
         if (!userData.user) return;
@@ -71,8 +68,6 @@ export default function Home() {
         }
       } catch (error) {
         console.error("Error loading achievements:", error);
-      } finally {
-        if (!abort) setAchievementsLoading(false);
       }
     };
 
@@ -87,7 +82,6 @@ export default function Home() {
     let abort = false;
 
     const loadCompleted = async () => {
-      setCompletedLoading(true);
       try {
         const { data: userData } = await supabase.auth.getUser();
         if (!userData.user) return;
@@ -98,8 +92,6 @@ export default function Home() {
         }
       } catch (error) {
         console.error("Error loading completed methods:", error);
-      } finally {
-        if (!abort) setCompletedLoading(false);
       }
     };
 
@@ -128,11 +120,7 @@ export default function Home() {
         <ProgressCard
           icon={BookOpen}
           heading="Mastered Methods"
-          subheading={
-            completedLoading
-              ? "Loading..."
-              : `${completedCount} / ${totalMethods}`
-          }
+          subheading="Master More →"
           progressLabel="Completed"
           progressCurrent={completedCount}
           progressMax={Math.max(totalMethods, 1)}
@@ -145,11 +133,7 @@ export default function Home() {
         <ProgressCard
           icon={Award}
           heading="Achievements"
-          subheading={
-            achievementsLoading
-              ? "Loading..."
-              : `${achievementsEarned} / ${achievementsTotal}`
-          }
+          subheading="View All →"
           progressLabel="Unlocked"
           progressCurrent={achievementsEarned}
           progressMax={achievementsTotal}

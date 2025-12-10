@@ -58,12 +58,12 @@ export default function MethodCategories() {
       )}
 
       {!loading && categories.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
+        <div className="grid grid-cols-1 gap-3 w-full max-w-2xl">
           {categories.map((category) => (
             <button
               key={category.name}
               onClick={() => handleCategoryClick(category.name)}
-              className="card items-center justify-center min-h-[175px] bg-primary/10 card-border  hover:shadow-lg transition-shadow cursor-pointer"
+              className="card items-center justify-center min-h-[175px] bg-base-200 card-border border-base-300 cursor-pointer"
             >
               <div className="card-body grow-0 items-center justify-center text-center p-6 gap-4">
                 <h2 className="card-title text-xl">{category.name}</h2>

@@ -33,7 +33,7 @@ export default function ProgressCard({
         >
           <Icon />
         </div>
-        <div className="flex flex-col">
+        <div className="flex flex-col items-baseline">
           <p className="text-sm text-base-content/60">{heading}</p>
           <p className="font-semibold text-lg">{subheading}</p>
         </div>
