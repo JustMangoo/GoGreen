@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { createMethod } from "../../services/methods";
-import type { Step } from "../../services/methods";
+import { createMethod, updateMethod } from "../../services/methods";
+import type { Step, Method } from "../../services/methods";
 import ImageUpload from "./ImageUpload";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Link2 } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import Popup from "./Popup";
 
@@ -10,6 +10,7 @@ interface AddMethodFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  method?: Method;
 }
 
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL;
@@ -18,7 +19,10 @@ export default function AddMethodForm({
   isOpen,
   onClose,
   onSuccess,
+  method,
 }: AddMethodFormProps) {
+  const isEditMode = !!method;
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -35,6 +39,9 @@ export default function AddMethodForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [imageInputMode, setImageInputMode] = useState<"upload" | "url">(
+    "upload"
+  );
 
   useEffect(() => {
     const checkAuthorization = async () => {
@@ -48,6 +55,31 @@ export default function AddMethodForm({
     };
     checkAuthorization();
   }, []);
+
+  // Pre-populate form when editing
+  useEffect(() => {
+    if (method && isEditMode) {
+      setFormData({
+        title: method.title,
+        description: method.description,
+        category: method.category,
+        duration: method.duration,
+        image_url: method.image_url || "",
+      });
+      setSteps(method.steps || []);
+      // Determine if image is a URL or uploaded
+      if (method.image_url && method.image_url.startsWith("http")) {
+        setImageInputMode("url");
+      } else {
+        setImageInputMode("upload");
+      }
+      setCurrentStep({
+        order: (method.steps?.length || 0) + 1,
+        title: "",
+        description: "",
+      });
+    }
+  }, [method, isEditMode, isOpen]);
 
   const handleAddStep = () => {
     if (!currentStep.title || !currentStep.description) {
@@ -98,10 +130,20 @@ export default function AddMethodForm({
     setSubmitting(true);
 
     try {
-      await createMethod({
-        ...formData,
-        steps: steps.length > 0 ? steps : undefined,
-      });
+      if (isEditMode && method) {
+        // Update existing method
+        await updateMethod(method.id, {
+          ...formData,
+          steps: steps.length > 0 ? steps : undefined,
+        });
+      } else {
+        // Create new method
+        await createMethod({
+          ...formData,
+          steps: steps.length > 0 ? steps : undefined,
+        });
+      }
+
       // Reset form
       setFormData({
         title: "",
@@ -116,10 +158,17 @@ export default function AddMethodForm({
         title: "",
         description: "",
       });
+      setImageInputMode("upload");
       onClose();
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create method");
+      setError(
+        err instanceof Error
+          ? err.message
+          : isEditMode
+          ? "Failed to update method"
+          : "Failed to create method"
+      );
     } finally {
       setSubmitting(false);
     }
@@ -196,12 +245,52 @@ export default function AddMethodForm({
         />
       </div>
 
-      <ImageUpload
-        onImageUploaded={(url: string) =>
-          setFormData({ ...formData, image_url: url })
-        }
-        currentImageUrl={formData.image_url}
-      />
+      {/* Image Input Toggle */}
+      <div className="form-control">
+        <label className="label">
+          <span className="label-text text-sm">Image</span>
+        </label>
+        <div className="flex gap-2 mb-2">
+          <button
+            type="button"
+            className={`btn btn-xs flex-1 ${
+              imageInputMode === "upload" ? "btn-primary" : "btn-outline"
+            }`}
+            onClick={() => setImageInputMode("upload")}
+          >
+            Upload
+          </button>
+          <button
+            type="button"
+            className={`btn btn-xs flex-1 gap-1 ${
+              imageInputMode === "url" ? "btn-primary" : "btn-outline"
+            }`}
+            onClick={() => setImageInputMode("url")}
+          >
+            <Link2 size={12} />
+            URL
+          </button>
+        </div>
+
+        {imageInputMode === "upload" ? (
+          <ImageUpload
+            onImageUploaded={(url: string) =>
+              setFormData({ ...formData, image_url: url })
+            }
+            currentImageUrl={formData.image_url}
+          />
+        ) : (
+          <input
+            type="url"
+            placeholder="e.g., https://example.com/image.jpg"
+            className="input input-bordered input-sm"
+            value={formData.image_url}
+            onChange={(e) =>
+              setFormData({ ...formData, image_url: e.target.value })
+            }
+          />
+        )}
+      </div>
 
       {/* Steps Section */}
       <div className="divider my-0">Steps (Optional)</div>
@@ -307,10 +396,16 @@ export default function AddMethodForm({
         <Popup
           isOpen={isOpen}
           onClose={onClose}
-          heading="Add New Method"
+          heading={isEditMode ? "Edit Method" : "Add New Method"}
           body={formContent as any}
           primaryAction={{
-            label: submitting ? "Creating..." : "Add Method",
+            label: submitting
+              ? isEditMode
+                ? "Updating..."
+                : "Creating..."
+              : isEditMode
+              ? "Update Method"
+              : "Add Method",
             onClick: () => {},
           }}
           primaryButtonType="submit"

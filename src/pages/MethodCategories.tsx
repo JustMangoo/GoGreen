@@ -50,7 +50,7 @@ export default function MethodCategories() {
   };
 
   return (
-    <div className=" flex flex-col items-center justify-start bg-base-100 p-4 mb-16">
+    <div className=" flex flex-col items-center justify-start bg-base-100 p-4">
       {loading && <div className="loading loading-spinner loading-lg"></div>}
 
       {!loading && categories.length === 0 && (

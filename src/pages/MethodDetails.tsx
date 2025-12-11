@@ -9,7 +9,10 @@ import {
   isMethodCompleted,
 } from "../services/achievementOperations";
 import { supabase } from "../lib/supabaseClient";
-import { ArrowLeft, Heart, Clock, Tag, Trophy } from "lucide-react";
+import { ArrowLeft, Heart, Clock, Tag, Trophy, Edit } from "lucide-react";
+import AddMethodForm from "../components/Tools/AddMethodForm";
+
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL;
 
 export default function MethodDetails() {
   const [searchParams] = useSearchParams();
@@ -22,6 +25,8 @@ export default function MethodDetails() {
   const [mastering, setMastering] = useState(false);
   const [masteringSuccess, setMasteringSuccess] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [editFormOpen, setEditFormOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const { savedIds, savingId, toggleSave } = useSavedMethods();
   const { refetchProfile } = useUserProfile();
 
@@ -63,6 +68,10 @@ export default function MethodDetails() {
       setLoading(true);
       setError(null);
       try {
+        // Get current user email
+        const { data: authData } = await supabase.auth.getUser();
+        setUserEmail(authData.user?.email || null);
+
         const methods = await listMethods();
         if (abort) return;
 
@@ -73,12 +82,9 @@ export default function MethodDetails() {
           setMethod(found);
 
           // Check if method is completed
-          const {
-            data: { user },
-          } = await supabase.auth.getUser();
-          if (user && found.id) {
+          if (authData.user && found.id) {
             const completed = await isMethodCompleted(
-              user.id,
+              authData.user.id,
               Number(found.id)
             );
             if (!abort) {
@@ -104,6 +110,20 @@ export default function MethodDetails() {
     };
   }, [methodId]);
 
+  const handleEditSuccess = async () => {
+    setEditFormOpen(false);
+    // Reload method details
+    try {
+      const methods = await listMethods();
+      const found = methods.find((m) => String(m.id) === methodId);
+      if (found) {
+        setMethod(found);
+      }
+    } catch (err) {
+      console.error("Failed to reload method:", err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-base-100 p-4">
@@ -127,8 +147,18 @@ export default function MethodDetails() {
     );
   }
 
+  const isAdmin = userEmail === ADMIN_EMAIL;
+
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-base-100 p-4 gap-4">
+      {/* Edit Form Modal */}
+      <AddMethodForm
+        isOpen={editFormOpen}
+        onClose={() => setEditFormOpen(false)}
+        onSuccess={handleEditSuccess}
+        method={method}
+      />
+
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
@@ -153,20 +183,31 @@ export default function MethodDetails() {
           <div className="flex-1">
             <h1 className="text-2xl font-bold">{method.title}</h1>
           </div>
-          <button
-            onClick={() => toggleSave(String(method.id))}
-            disabled={savingId === String(method.id)}
-            className="btn btn-ghost btn-circle"
-          >
-            <Heart
-              size={20}
-              className={
-                savedIds.has(String(method.id))
-                  ? "fill-current text-primary"
-                  : ""
-              }
-            />
-          </button>
+          <div className="flex gap-2">
+            {isAdmin && (
+              <button
+                onClick={() => setEditFormOpen(true)}
+                className="btn btn-ghost btn-circle"
+                title="Edit method"
+              >
+                <Edit size={20} />
+              </button>
+            )}
+            <button
+              onClick={() => toggleSave(String(method.id))}
+              disabled={savingId === String(method.id)}
+              className="btn btn-ghost btn-circle"
+            >
+              <Heart
+                size={20}
+                className={
+                  savedIds.has(String(method.id))
+                    ? "fill-current text-primary"
+                    : ""
+                }
+              />
+            </button>
+          </div>
         </div>
 
         {/* Category and Duration */}

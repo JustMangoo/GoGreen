@@ -46,3 +46,17 @@ export async function listMethods(userId?: string): Promise<Method[]> {
 
   return data;
 }
+
+export async function updateMethod(
+  id: string | number,
+  method: Partial<Method>
+): Promise<Method> {
+  const { data, error } = await supabase
+    .from("methods")
+    .update(method)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
