@@ -311,11 +311,9 @@ export default function AddMethodForm({
           body={formContent as any}
           primaryAction={{
             label: submitting ? "Creating..." : "Add Method",
-            onClick: () => {
-              const form = document.querySelector("form") as HTMLFormElement;
-              if (form) form.requestSubmit();
-            },
+            onClick: () => {},
           }}
+          primaryButtonType="submit"
           secondaryAction={{
             label: "Cancel",
             onClick: onClose,

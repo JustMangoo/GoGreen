@@ -123,8 +123,16 @@ export default function MethodList() {
       <ul className="grid grid-cols-2 gap-3 p-0 bg-base-100 rounded-box w-full">
         {filteredMethods.map((method) => (
           <li key={method.id} className="p-0">
-            <button
+            <div
+              role="button"
+              tabIndex={0}
               onClick={() => navigate(`/method-details?id=${method.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigate(`/method-details?id=${method.id}`);
+                }
+              }}
               className="card bg-base-100 image-full shadow-sm h-48 w-full cursor-pointer hover:shadow-lg transition-shadow"
             >
               <figure>
@@ -161,7 +169,7 @@ export default function MethodList() {
                   </button>
                 </div>
               </div>
-            </button>
+            </div>
           </li>
         ))}
       </ul>

@@ -15,6 +15,8 @@ interface PopupProps {
   };
   primaryButtonClass?: string;
   secondaryButtonClass?: string;
+  primaryButtonType?: "button" | "submit";
+  secondaryButtonType?: "button" | "submit";
 }
 
 export default function Popup({
@@ -24,6 +26,8 @@ export default function Popup({
   body,
   primaryAction,
   secondaryAction,
+  primaryButtonType = "button",
+  secondaryButtonType = "button",
   primaryButtonClass = "btn-primary",
   secondaryButtonClass = "btn-outline",
 }: PopupProps) {
@@ -47,18 +51,24 @@ export default function Popup({
 
           {/* Action Buttons */}
           <div className="modal-action gap-2">
-            <button
-              onClick={secondaryAction.onClick}
-              className={`btn ${secondaryButtonClass}`}
-            >
-              {secondaryAction.label}
-            </button>
-            <button
-              onClick={primaryAction.onClick}
-              className={`btn ${primaryButtonClass}`}
-            >
-              {primaryAction.label}
-            </button>
+            {secondaryAction && (
+              <button
+                type={secondaryButtonType ?? "button"}
+                className={`btn ${secondaryButtonClass}`}
+                onClick={secondaryAction.onClick}
+              >
+                {secondaryAction.label}
+              </button>
+            )}
+            {primaryAction && (
+              <button
+                type={primaryButtonType ?? "button"}
+                className={`btn ${primaryButtonClass}`}
+                onClick={primaryAction.onClick}
+              >
+                {primaryAction.label}
+              </button>
+            )}
           </div>
         </div>
       </div>
