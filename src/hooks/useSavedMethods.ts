@@ -5,12 +5,21 @@ import {
   addSavedMethod,
   removeSavedMethod,
 } from "../services/savedMethods";
+import { checkAndAwardAchievements } from "../services/checkAchievements";
 
 export function useSavedMethods() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [newAchievements, setNewAchievements] = useState<
+    Array<{
+      id: string;
+      name: string;
+      description: string;
+      pointsReward: number;
+    }>
+  >([]);
 
   // 1. Listen for Auth Changes
   useEffect(() => {
@@ -86,7 +95,16 @@ export function useSavedMethods() {
         // Use Service to Add
         await addSavedMethod(userId, methodIdValue);
 
-        setSavedIds((prev) => new Set(prev).add(methodId));
+        setSavedIds((prev) => {
+          const next = new Set(prev).add(methodId);
+          // Check achievements after adding
+          checkAndAwardAchievements(userId, next.size).then((earned) => {
+            if (earned.length > 0) {
+              setNewAchievements((prev) => [...prev, ...earned]);
+            }
+          });
+          return next;
+        });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");
@@ -95,5 +113,16 @@ export function useSavedMethods() {
     }
   };
 
-  return { savedIds, savingId, toggleSave, error };
+  const clearAchievement = () => {
+    setNewAchievements((prev) => prev.slice(1));
+  };
+
+  return {
+    savedIds,
+    savingId,
+    toggleSave,
+    error,
+    newAchievements,
+    clearAchievement,
+  };
 }

@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { Achievements } from "../constants/achievements";
+import {
+  Achievements,
+  checkEarneAchievements,
+} from "../constants/achievements";
 import { ArrowLeft, Trophy, Lock } from "lucide-react";
 import { useNavigate } from "react-router";
 import {
@@ -8,6 +11,7 @@ import {
   getCompletedMethodsCount,
   getCompletedCategories,
   hasLearnedAllMethods,
+  awardAchievement,
 } from "../services/achievementOperations";
 import { useSavedMethods } from "../hooks/useSavedMethods";
 
@@ -49,6 +53,36 @@ export default function AchievementsPage() {
         const completedCategories = await getCompletedCategories(userId);
         const hasLearned = await hasLearnedAllMethods(userId);
 
+        // Check which achievements should be earned based on current progress
+        const shouldEarn = checkEarneAchievements({
+          savedMethods: savedCount,
+          completedMethods: completedCount,
+          completedCategoryCount: completedCategories.length >= 1 ? 1 : 0,
+          completedCategories,
+          learnedAllMethods: hasLearned,
+          totalMethods:
+            (await supabase.from("methods").select("id")).data?.length || 0,
+        });
+
+        // Award any newly earned achievements
+        for (const achievement of shouldEarn) {
+          if (!earnedSet.has(achievement.id)) {
+            try {
+              await awardAchievement(
+                userId,
+                achievement.id,
+                achievement.pointsReward
+              );
+              earnedSet.add(achievement.id);
+            } catch (error) {
+              console.error(
+                `Failed to award achievement ${achievement.id}:`,
+                error
+              );
+            }
+          }
+        }
+
         // Build achievement progress list
         const progressList: AchievementProgress[] = Achievements.map(
           (achievement) => {
@@ -57,7 +91,7 @@ export default function AchievementsPage() {
             let progress = 0;
 
             switch (achievement.id) {
-              case "quick-save":
+              case "first-save":
                 currentValue = Math.min(savedCount, 1);
                 maxValue = 1;
                 progress =
@@ -65,12 +99,12 @@ export default function AchievementsPage() {
                     ? 100
                     : (currentValue / maxValue) * 100;
                 break;
-              case "collection-builder":
+              case "save-collector":
                 currentValue = savedCount;
                 maxValue = 10;
                 progress = (currentValue / maxValue) * 100;
                 break;
-              case "first-success":
+              case "first-completion":
                 currentValue = Math.min(completedCount, 1);
                 maxValue = 1;
                 progress =
@@ -78,12 +112,12 @@ export default function AchievementsPage() {
                     ? 100
                     : (currentValue / maxValue) * 100;
                 break;
-              case "category-champion":
+              case "category-master":
                 currentValue = completedCategories.length >= 1 ? 1 : 0;
                 maxValue = 1;
                 progress = currentValue >= maxValue ? 100 : 0;
                 break;
-              case "preservation-specialist":
+              case "multi-category":
                 currentValue = completedCategories.length;
                 maxValue = 3;
                 progress = (currentValue / maxValue) * 100;

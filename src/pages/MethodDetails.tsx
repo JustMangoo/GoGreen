@@ -11,6 +11,8 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import { ArrowLeft, Heart, Clock, Tag, Trophy, Edit } from "lucide-react";
 import AddMethodForm from "../components/Tools/AddMethodForm";
+import AchievementPopup from "../components/Tools/AchievementPopup";
+import { checkAndAwardAchievements } from "../services/checkAchievements";
 
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL;
 
@@ -27,7 +29,13 @@ export default function MethodDetails() {
   const [isCompleted, setIsCompleted] = useState(false);
   const [editFormOpen, setEditFormOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const { savedIds, savingId, toggleSave } = useSavedMethods();
+  const [newAchievement, setNewAchievement] = useState<{
+    name: string;
+    description: string;
+    pointsReward: number;
+  } | null>(null);
+  const { savedIds, savingId, toggleSave, newAchievements, clearAchievement } =
+    useSavedMethods();
   const { refetchProfile } = useUserProfile();
 
   const handleMasterMethod = async () => {
@@ -47,6 +55,12 @@ export default function MethodDetails() {
       setIsCompleted(true);
       setMasteringSuccess(true);
 
+      // Check for newly earned achievements
+      const earned = await checkAndAwardAchievements(user.id, savedIds.size);
+      if (earned.length > 0) {
+        setNewAchievement(earned[0]);
+      }
+
       // Refetch user profile to update points
       await refetchProfile();
 
@@ -60,6 +74,14 @@ export default function MethodDetails() {
       setMastering(false);
     }
   };
+
+  // Handle achievement popup from saved methods
+  useEffect(() => {
+    if (newAchievements.length > 0) {
+      setNewAchievement(newAchievements[0]);
+      clearAchievement();
+    }
+  }, [newAchievements, clearAchievement]);
 
   useEffect(() => {
     let abort = false;
@@ -151,6 +173,12 @@ export default function MethodDetails() {
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-base-100 p-4 gap-4">
+      {/* Achievement Popup */}
+      <AchievementPopup
+        achievement={newAchievement}
+        onClose={() => setNewAchievement(null)}
+      />
+
       {/* Edit Form Modal */}
       <AddMethodForm
         isOpen={editFormOpen}

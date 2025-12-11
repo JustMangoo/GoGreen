@@ -116,7 +116,10 @@ export default function Home() {
       />
 
       {/* Learned Methods Card */}
-      <button onClick={() => navigate("/methods")} className="w-full">
+      <button
+        onClick={() => navigate("/methods")}
+        className="w-full cursor-pointer"
+      >
         <ProgressCard
           icon={BookOpen}
           heading="Mastered Methods"
@@ -129,7 +132,10 @@ export default function Home() {
       </button>
 
       {/* Achievements Card */}
-      <button onClick={() => navigate("/achievements")} className="w-full">
+      <button
+        onClick={() => navigate("/achievements")}
+        className="w-full cursor-pointer"
+      >
         <ProgressCard
           icon={Award}
           heading="Achievements"
@@ -159,7 +165,7 @@ export default function Home() {
               <button
                 key={method.id}
                 onClick={() => navigate(`/method-details?id=${method.id}`)}
-                className="card image-full h-24 hover:shadow-lg transition-shadow text-left group relative overflow-hidden"
+                className=" cursor-pointer card image-full h-24 hover:shadow-lg transition-shadow text-left group relative overflow-hidden"
                 style={{
                   backgroundImage: `url(${
                     method.image_url || "https://placehold.co/400x300"

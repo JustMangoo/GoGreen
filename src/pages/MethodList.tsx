@@ -6,6 +6,7 @@ import AddMethodForm from "../components/Tools/AddMethodForm";
 import { useSavedMethods } from "../hooks/useSavedMethods";
 import { useSearchParams, useNavigate } from "react-router";
 import { supabase } from "../lib/supabaseClient";
+import AchievementPopup from "../components/Tools/AchievementPopup";
 
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL;
 
@@ -19,12 +20,27 @@ export default function MethodList() {
   const [methods, setMethods] = useState<Method[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [newAchievement, setNewAchievement] = useState<{
+    name: string;
+    description: string;
+    pointsReward: number;
+  } | null>(null);
   const {
     savedIds,
     savingId,
     toggleSave,
     error: saveError,
+    newAchievements,
+    clearAchievement,
   } = useSavedMethods();
+
+  // Handle achievement popup from saved methods
+  useEffect(() => {
+    if (newAchievements.length > 0) {
+      setNewAchievement(newAchievements[0]);
+      clearAchievement();
+    }
+  }, [newAchievements, clearAchievement]);
 
   useEffect(() => {
     // Get current user email
@@ -78,6 +94,12 @@ export default function MethodList() {
 
   return (
     <div className="flex flex-col gap-4 items-center justify-start min-h-screen bg-base-100 p-4 mb-16">
+      {/* Achievement Popup */}
+      <AchievementPopup
+        achievement={newAchievement}
+        onClose={() => setNewAchievement(null)}
+      />
+
       {isAdmin && (
         <button
           className="btn btn-primary w-full"
