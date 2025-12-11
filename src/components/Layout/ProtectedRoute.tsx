@@ -50,7 +50,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }, [navigate]);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // Find the scrollable container and scroll to top
+    const scrollContainer = document.querySelector(".flex-1.overflow-auto");
+    if (scrollContainer) {
+      scrollContainer.scrollTop = 0;
+    }
   }, [location.pathname]);
 
   if (loading) {
