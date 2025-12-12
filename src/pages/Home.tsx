@@ -1,6 +1,6 @@
 import ProgressCard from "../components/Tools/ProgressCard";
 import { TrendingUp, Award, BookOpen, Heart } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { supabase } from "../lib/supabaseClient";
 import { useSavedMethods } from "../hooks/useSavedMethods";
@@ -13,6 +13,7 @@ import {
 import { Achievements } from "../constants/achievements";
 import type { Method } from "../services/methods";
 import { getLevelTier } from "../constants/levels";
+import { getThumbnailUrl } from "../utils/imageHelpers";
 
 export default function Home() {
   const [savedMethods, setSavedMethods] = useState<Method[]>([]);
@@ -153,7 +154,7 @@ export default function Home() {
           <div className="flex justify-center items-center border-base-300 border-2 bg-base-100 text-primary rounded-box w-12 h-12">
             <Heart size={20} />
           </div>
-          <h3 className="font-semibold text-lg">Saved Methods</h3>
+          <h2 className="font-semibold text-lg">Saved Methods</h2>
         </div>
         {savedMethods.length === 0 ? (
           <p className="text-sm text-base-content/60 text-center py-4">
@@ -165,16 +166,19 @@ export default function Home() {
               <button
                 key={method.id}
                 onClick={() => navigate(`/method-details?id=${method.id}`)}
-                className=" cursor-pointer card image-full h-24 hover:shadow-lg transition-shadow text-left group relative overflow-hidden"
-                style={{
-                  backgroundImage: `url(${
-                    method.image_url || "https://placehold.co/400x300"
-                  })`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
+                className="cursor-pointer card h-24 hover:shadow-lg transition-shadow text-left group relative overflow-hidden"
               >
-                <div className="bg-black/40 w-full h-full flex flex-col justify-between p-3">
+                <img
+                  src={getThumbnailUrl(method.image_url, {
+                    width: 200,
+                    height: 96,
+                    quality: 70,
+                  })}
+                  alt={method.title}
+                  loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/40 flex flex-col justify-between p-3">
                   <p className="font-semibold text-sm line-clamp-2 text-white">
                     {method.title}
                   </p>

@@ -19,7 +19,11 @@ export default function TopBar() {
       <NavLink to="/profile">
         <div className="avatar">
           <div className="w-12 rounded-full">
-            <img src="https://img.daisyui.com/images/profile/demo/yellingcat@192.webp" />
+            <img
+              alt="Link to Profile"
+              aria-label="Link to your profile"
+              src="https://img.daisyui.com/images/profile/demo/yellingcat@192.webp"
+            />
           </div>
         </div>
       </NavLink>

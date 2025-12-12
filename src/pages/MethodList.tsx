@@ -7,6 +7,7 @@ import { useSavedMethods } from "../hooks/useSavedMethods";
 import { useSearchParams, useNavigate } from "react-router";
 import { supabase } from "../lib/supabaseClient";
 import AchievementPopup from "../components/Tools/AchievementPopup";
+import { getThumbnailUrl } from "../utils/imageHelpers";
 
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL;
 
@@ -159,8 +160,13 @@ export default function MethodList() {
             >
               <figure>
                 <img
-                  src={method.image_url || "https://placehold.co/400x300"}
+                  src={getThumbnailUrl(method.image_url, {
+                    width: 400,
+                    height: 384,
+                    quality: 75,
+                  })}
                   alt={method.title}
+                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
               </figure>

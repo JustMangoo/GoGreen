@@ -13,6 +13,7 @@ import { ArrowLeft, Heart, Clock, Tag, Trophy, Edit } from "lucide-react";
 import AddMethodForm from "../components/Tools/AddMethodForm";
 import AchievementPopup from "../components/Tools/AchievementPopup";
 import { checkAndAwardAchievements } from "../services/checkAchievements";
+import { getFullSizeUrl } from "../utils/imageHelpers";
 
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL;
 
@@ -199,7 +200,7 @@ export default function MethodDetails() {
       {/* Method Image */}
       <div className="w-full rounded-lg overflow-hidden bg-base-200 h-64">
         <img
-          src={method.image_url || "https://placehold.co/400x300"}
+          src={getFullSizeUrl(method.image_url, 85)}
           alt={method.title}
           className="w-full h-full object-cover"
         />
