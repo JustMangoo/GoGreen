@@ -1,6 +1,6 @@
 import ProgressCard from "../components/Tools/ProgressCard";
 import { TrendingUp, Award, BookOpen, Heart } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { supabase } from "../lib/supabaseClient";
 import { useSavedMethods } from "../hooks/useSavedMethods";
@@ -20,6 +20,7 @@ export default function Home() {
   const [achievementsEarned, setAchievementsEarned] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
   const [totalMethods, setTotalMethods] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
   const { savedIds } = useSavedMethods();
   const { profile } = useUserProfile();
 
@@ -27,6 +28,7 @@ export default function Home() {
 
   const navigate = useNavigate();
   const points = profile?.points || 0;
+  const levelTier = useMemo(() => getLevelTier(points), [points]);
 
   useEffect(() => {
     let abort = false;
@@ -57,23 +59,16 @@ export default function Home() {
 
   useEffect(() => {
     let abort = false;
-
-    const loadAchievements = async () => {
+    const loadUser = async () => {
       try {
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) return;
-
-        const earnedIds = await getUserAchievements(userData.user.id);
-        if (!abort) {
-          setAchievementsEarned(earnedIds.length);
-        }
+        const { data } = await supabase.auth.getUser();
+        if (abort) return;
+        setUserId(data.user?.id ?? null);
       } catch (error) {
-        console.error("Error loading achievements:", error);
+        console.error("Error loading user:", error);
       }
     };
-
-    loadAchievements();
-
+    loadUser();
     return () => {
       abort = true;
     };
@@ -81,38 +76,76 @@ export default function Home() {
 
   useEffect(() => {
     let abort = false;
-
-    const loadCompleted = async () => {
+    const loadCounts = async () => {
+      if (!userId) return;
       try {
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) return;
-
-        const count = await getCompletedMethodsCount(userData.user.id);
-        if (!abort) {
-          setCompletedCount(count);
-        }
+        const [earnedIds, completed] = await Promise.all([
+          getUserAchievements(userId),
+          getCompletedMethodsCount(userId),
+        ]);
+        if (abort) return;
+        setAchievementsEarned(earnedIds.length);
+        setCompletedCount(completed);
       } catch (error) {
-        console.error("Error loading completed methods:", error);
+        console.error("Error loading user stats:", error);
       }
     };
-
-    loadCompleted();
-
+    loadCounts();
     return () => {
       abort = true;
     };
-  }, []);
+  }, [userId]);
 
-  const handleImageLoad =
-    (title: string) => (e: React.SyntheticEvent<HTMLImageElement>) => {
-      const img = e.currentTarget;
-      console.log("Loaded image", {
-        title,
-        currentSrc: img.currentSrc,
-        natural: `${img.naturalWidth}x${img.naturalHeight}`,
-        rendered: `${img.clientWidth}x${img.clientHeight}`,
-      });
-    };
+  const deferredSavedMethods = useDeferredValue(savedMethods);
+
+  const savedMethodsContent = useMemo(
+    () =>
+      deferredSavedMethods.length === 0 ? (
+        <p className="text-sm text-base-content/60 text-center py-4">
+          No saved methods yet. Start saving methods to see them here!
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {deferredSavedMethods.map((method) => (
+            <button
+              key={method.id}
+              onClick={() => navigate(`/method-details?id=${method.id}`)}
+              className="cursor-pointer card h-24 hover:shadow-lg transition-shadow text-left group relative overflow-hidden"
+            >
+              <img
+                src={getThumbnailUrl(method.image_url, {
+                  width: 220,
+                  height: 96,
+                  quality: 25,
+                })}
+                srcSet={[
+                  `${getThumbnailUrl(method.image_url, { width: 180, height: 96, quality: 22 })} 180w`,
+                  `${getThumbnailUrl(method.image_url, { width: 220, height: 96, quality: 25 })} 220w`,
+                  `${getThumbnailUrl(method.image_url, { width: 320, height: 144, quality: 35 })} 320w`,
+                  `${getThumbnailUrl(method.image_url, { width: 400, height: 192, quality: 60 })} 400w`,
+                ].join(", ")}
+                sizes="(max-width: 480px) 44vw, (max-width: 1024px) 185px, 255px"
+                alt={method.title}
+                loading="lazy"
+                decoding="async"
+                width={220}
+                height={96}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/50 flex flex-col justify-between p-3">
+                <p className="font-semibold text-sm line-clamp-2 text-white">
+                  {method.title}
+                </p>
+                <div className="bg-base-100 rounded-box px-2 py-1 w-fit">
+                  <p className="text-xs text-neutral">{method.category}</p>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      ),
+    [deferredSavedMethods, navigate]
+  );
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-base-100 p-4 gap-4">
@@ -120,10 +153,10 @@ export default function Home() {
       <ProgressCard
         icon={TrendingUp}
         heading="Level"
-        subheading={getLevelTier(points).name}
+        subheading={levelTier.name}
         progressLabel="Next Level"
         progressCurrent={points}
-        progressMax={getLevelTier(points).maxPoints}
+        progressMax={levelTier.maxPoints}
         showProgressBar={true}
       />
 
@@ -167,51 +200,7 @@ export default function Home() {
           </div>
           <h2 className="font-semibold text-lg">Saved Methods</h2>
         </div>
-        {savedMethods.length === 0 ? (
-          <p className="text-sm text-base-content/60 text-center py-4">
-            No saved methods yet. Start saving methods to see them here!
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {savedMethods.map((method) => (
-              <button
-                key={method.id}
-                onClick={() => navigate(`/method-details?id=${method.id}`)}
-                className="cursor-pointer card h-24 hover:shadow-lg transition-shadow text-left group relative overflow-hidden"
-              >
-                <img
-                  src={getThumbnailUrl(method.image_url, {
-                    width: 220,
-                    height: 96,
-                    quality: 25,
-                  })}
-                  srcSet={[
-                    `${getThumbnailUrl(method.image_url, { width: 180, height: 96, quality: 22 })} 180w`,
-                    `${getThumbnailUrl(method.image_url, { width: 220, height: 96, quality: 25 })} 220w`,
-                    `${getThumbnailUrl(method.image_url, { width: 320, height: 144, quality: 35 })} 320w`,
-                    `${getThumbnailUrl(method.image_url, { width: 400, height: 192, quality: 60 })} 400w`,
-                  ].join(", ")}
-                  sizes="(max-width: 480px) 44vw, (max-width: 1024px) 185px, 255px"
-                  alt={method.title}
-                  loading="lazy"
-                  decoding="async"
-                  width={220}
-                  height={96}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  onLoad={handleImageLoad(method.title)}
-                />
-                <div className="absolute inset-0 bg-black/50 flex flex-col justify-between p-3">
-                  <p className="font-semibold text-sm line-clamp-2 text-white">
-                    {method.title}
-                  </p>
-                  <div className="bg-base-100 rounded-box px-2 py-1 w-fit">
-                    <p className="text-xs text-neutral">{method.category}</p>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
+        {savedMethodsContent}
       </div>
     </div>
   );

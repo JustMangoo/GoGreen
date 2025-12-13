@@ -1,12 +1,12 @@
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { getLevelTier } from "../../constants/levels";
 import { NavLink } from "react-router";
+import { useMemo } from "react";
 
 export default function TopBar() {
   const { profile, loading } = useUserProfile();
   const points = profile?.points || 0;
-
-  const currentTier = getLevelTier(points);
+  const currentTier = useMemo(() => getLevelTier(points), [points]);
 
   return (
     <header className="w-full flex justify-between py-3 px-4 sticky top-0 border-b border-base-300 bg-base-100 shadow-lg shadow-neutral/5">
