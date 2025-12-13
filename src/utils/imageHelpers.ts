@@ -14,7 +14,7 @@ export function getThumbnailUrl(
 
   if (!imageUrl) return fallback;
 
-  const { width = 400, height = 300, quality = 75 } = options;
+  const { width = 400, height = 300, quality = 55 } = options;
 
   // Check if it's a Supabase Storage URL
   if (imageUrl.includes("supabase.co/storage")) {

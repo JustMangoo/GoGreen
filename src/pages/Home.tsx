@@ -172,10 +172,18 @@ export default function Home() {
                   src={getThumbnailUrl(method.image_url, {
                     width: 200,
                     height: 96,
-                    quality: 70,
+                    quality: 30,
                   })}
+                  srcSet={[
+                    `${getThumbnailUrl(method.image_url, { width: 200, height: 96, quality: 30 })} 200w`,
+                    `${getThumbnailUrl(method.image_url, { width: 300, height: 144, quality: 40 })} 300w`,
+                    `${getThumbnailUrl(method.image_url, { width: 400, height: 192, quality: 60 })} 400w`,
+                  ].join(", ")}
+                  sizes="(max-width: 480px) 50vw, (max-width: 1024px) 185px, 200px"
                   alt={method.title}
                   loading="lazy"
+                  width={200}
+                  height={96}
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-black/50 flex flex-col justify-between p-3">
