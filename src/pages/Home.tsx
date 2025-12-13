@@ -103,6 +103,17 @@ export default function Home() {
     };
   }, []);
 
+  const handleImageLoad =
+    (title: string) => (e: React.SyntheticEvent<HTMLImageElement>) => {
+      const img = e.currentTarget;
+      console.log("Loaded image", {
+        title,
+        currentSrc: img.currentSrc,
+        natural: `${img.naturalWidth}x${img.naturalHeight}`,
+        rendered: `${img.clientWidth}x${img.clientHeight}`,
+      });
+    };
+
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-base-100 p-4 gap-4">
       {/* Level Card */}
@@ -170,21 +181,24 @@ export default function Home() {
               >
                 <img
                   src={getThumbnailUrl(method.image_url, {
-                    width: 200,
+                    width: 220,
                     height: 96,
-                    quality: 30,
+                    quality: 25,
                   })}
                   srcSet={[
-                    `${getThumbnailUrl(method.image_url, { width: 200, height: 96, quality: 30 })} 200w`,
-                    `${getThumbnailUrl(method.image_url, { width: 300, height: 144, quality: 40 })} 300w`,
+                    `${getThumbnailUrl(method.image_url, { width: 180, height: 96, quality: 22 })} 180w`,
+                    `${getThumbnailUrl(method.image_url, { width: 220, height: 96, quality: 25 })} 220w`,
+                    `${getThumbnailUrl(method.image_url, { width: 320, height: 144, quality: 35 })} 320w`,
                     `${getThumbnailUrl(method.image_url, { width: 400, height: 192, quality: 60 })} 400w`,
                   ].join(", ")}
-                  sizes="(max-width: 480px) 50vw, (max-width: 1024px) 185px, 200px"
+                  sizes="(max-width: 480px) 44vw, (max-width: 1024px) 185px, 255px"
                   alt={method.title}
                   loading="lazy"
-                  width={200}
+                  decoding="async"
+                  width={220}
                   height={96}
                   className="absolute inset-0 w-full h-full object-cover"
+                  onLoad={handleImageLoad(method.title)}
                 />
                 <div className="absolute inset-0 bg-black/50 flex flex-col justify-between p-3">
                   <p className="font-semibold text-sm line-clamp-2 text-white">
