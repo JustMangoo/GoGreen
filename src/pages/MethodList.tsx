@@ -156,7 +156,7 @@ export default function MethodList() {
                   navigate(`/method-details?id=${method.id}`);
                 }
               }}
-              className="card bg-base-100 image-full shadow-sm h-48 w-full cursor-pointer hover:shadow-lg transition-shadow"
+              className="card  bg-base-100 image-full shadow-sm h-48 w-full cursor-pointer hover:shadow-lg transition-shadow"
             >
               <figure>
                 <img
@@ -170,7 +170,7 @@ export default function MethodList() {
                   className="w-full h-full object-cover"
                 />
               </figure>
-              <div className="card-body p-3 items-start">
+              <div className="card-body p-3 items-start ">
                 <h2 className="card-title text-sm line-clamp-2">
                   {method.title}
                 </h2>

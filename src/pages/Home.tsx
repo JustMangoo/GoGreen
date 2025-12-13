@@ -1,6 +1,6 @@
 import ProgressCard from "../components/Tools/ProgressCard";
 import { TrendingUp, Award, BookOpen, Heart } from "lucide-react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { supabase } from "../lib/supabaseClient";
 import { useSavedMethods } from "../hooks/useSavedMethods";
@@ -178,7 +178,7 @@ export default function Home() {
                   loading="lazy"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black/40 flex flex-col justify-between p-3">
+                <div className="absolute inset-0 bg-black/50 flex flex-col justify-between p-3">
                   <p className="font-semibold text-sm line-clamp-2 text-white">
                     {method.title}
                   </p>
