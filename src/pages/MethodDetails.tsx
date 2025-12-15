@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { listMethods } from "../services/methods";
 import type { Method } from "../services/methods";
 import { useSavedMethods } from "../hooks/useSavedMethods";
-import { useUserProfile } from "../hooks/useUserProfile";
 import {
   completeMethod,
   isMethodCompleted,
@@ -37,7 +36,6 @@ export default function MethodDetails() {
   } | null>(null);
   const { savedIds, savingId, toggleSave, newAchievements, clearAchievement } =
     useSavedMethods();
-  const { refetchProfile } = useUserProfile();
 
   const handleMasterMethod = async () => {
     if (!method || !methodId) return;
@@ -61,9 +59,6 @@ export default function MethodDetails() {
       if (earned.length > 0) {
         setNewAchievement(earned[0]);
       }
-
-      // Refetch user profile to update points
-      await refetchProfile();
 
       setTimeout(() => setMasteringSuccess(false), 3000);
     } catch (err) {
