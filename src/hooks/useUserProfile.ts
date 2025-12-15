@@ -1,47 +1,73 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import type { Profile } from "../services/profiles";
 
-interface UserProfile {
-  points: number;
-}
-
-export function useUserProfile(refetchTrigger?: number) {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+export function useUserProfile() {
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const refetchProfile = async () => {
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData.user) {
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("points")
-          .eq("id", userData.user.id)
-          .single();
-
-        if (profileData) {
-          setProfile(profileData as UserProfile);
-        }
-      }
-    } catch (error) {
-      console.error("Error loading profile:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Listen to auth state changes for instant updates
   useEffect(() => {
-    refetchProfile();
-  }, [refetchTrigger]);
+    let abort = false;
 
-  // Also set up a polling interval to check for updates every 2 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetchProfile();
-    }, 2000);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: sessionData }) => {
+      if (abort) return;
+      const uid = sessionData.session?.user.id ?? null;
+      setUserId(uid);
+    });
 
-    return () => clearInterval(interval);
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (abort) return;
+      setUserId(session?.user.id ?? null);
+    });
+
+    return () => {
+      abort = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  return { profile, loading, refetchProfile };
+  // Load profile when userId changes
+  useEffect(() => {
+    let abort = false;
+
+    const loadProfile = async () => {
+      if (!userId) {
+        if (!abort) {
+          setProfile(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id,points")
+        .eq("id", userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (abort) return;
+      if (error) {
+        console.error("Error loading profile", error);
+        setProfile(null);
+      } else {
+        setProfile(data);
+      }
+      setLoading(false);
+    };
+
+    loadProfile();
+    return () => {
+      abort = true;
+    };
+  }, [userId]);
+
+  return { profile, userId, loading };
 }

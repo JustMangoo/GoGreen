@@ -1,5 +1,10 @@
 import { supabase } from "../lib/supabaseClient";
 
+export type Profile = {
+  id: string;
+  points: number | null;
+};
+
 export type CompletedMethod = {
   user_id: string;
   method_id: number;
