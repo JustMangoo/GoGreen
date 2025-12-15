@@ -219,7 +219,7 @@ export default function Home() {
       />
 
       {/* Stats Cards */}
-      <div className="w-full flex flex-col gap-4">
+      <div className="w-full flex flex-col gap-4" style={{ minHeight: '272px' }}>
         {statsLoading ? (
           <>
             <div className="w-full h-32 skeleton rounded-box opacity-40"></div>
