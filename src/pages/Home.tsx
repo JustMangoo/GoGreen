@@ -1,7 +1,7 @@
 import ProgressCard from "../components/Tools/ProgressCard";
 import { TrendingUp, Award, BookOpen, Heart } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link } from "react-router";
 import { supabase } from "../lib/supabaseClient";
 import { useSavedMethods } from "../hooks/useSavedMethods";
 import { useUserProfile } from "../hooks/useUserProfile";
@@ -37,7 +37,6 @@ export default function Home() {
   const { profile, userId } = useUserProfile();
 
   const achievementsTotal = Achievements.length;
-  const navigate = useNavigate();
   const points = profile?.points || 0;
   const levelTier = useMemo(() => getLevelTier(points), [points]);
 
@@ -161,9 +160,10 @@ export default function Home() {
       // contain: 'paint' is safer than 'layout' here to prevent collapsing if browser miscalculates
       <div className="grid grid-cols-2 gap-3" style={{ contain: 'paint' }}>
         {deferredSavedMethods.map((method, index) => (
-          <button
+          <Link
             key={method.id}
-            onClick={() => navigate(`/method-details?id=${method.id}`)}
+            to={`/method-details?id=${method.id}`}
+            prefetch="intent"
             className="cursor-pointer card h-24 hover:shadow-lg transition-shadow text-left group relative overflow-hidden bg-base-100"
             style={{
               backgroundImage: `url('${getLQIPUrl(method.image_url, { width: 20, height: 9 })}')`,
@@ -199,11 +199,11 @@ export default function Home() {
               </p>
               <span className="text-[10px] text-gray-200">{method.category}</span>
             </div>
-          </button>
+          </Link>
         ))}
       </div>
     );
-  }, [deferredSavedMethods, methodsLoading, navigate, skeletonCount]);
+  }, [deferredSavedMethods, methodsLoading, skeletonCount]);
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-base-100 p-4 gap-4">
@@ -227,9 +227,10 @@ export default function Home() {
           </>
         ) : (
           <>
-            <button
-              onClick={() => navigate("/methods")}
-              className="w-full cursor-pointer"
+            <Link
+              to="/methods"
+              prefetch="intent"
+              className="w-full block cursor-pointer"
             >
               <ProgressCard
                 icon={BookOpen}
@@ -240,11 +241,12 @@ export default function Home() {
                 progressMax={Math.max(totalMethods, 1)}
                 showProgressBar={true}
               />
-            </button>
+            </Link>
 
-            <button
-              onClick={() => navigate("/achievements")}
-              className="w-full cursor-pointer"
+            <Link
+              to="/achievements"
+              prefetch="intent"
+              className="w-full block cursor-pointer"
             >
               <ProgressCard
                 icon={Award}
@@ -255,7 +257,7 @@ export default function Home() {
                 progressMax={achievementsTotal}
                 showProgressBar={true}
               />
-            </button>
+            </Link>
           </>
         )}
       </div>
