@@ -15,9 +15,18 @@ import { getLevelTier } from "../constants/levels";
 import { getThumbnailUrl, getLQIPUrl } from "../utils/imageHelpers";
 
 export default function Home() {
-  // 1. Separate Loading States to prevent "All-or-Nothing" blocking
+  // STRATEGY: Read from LocalStorage immediately to predict the layout height
+  const [skeletonCount] = useState(() => {
+    const cached = localStorage.getItem("saved_methods_count");
+    // Default to 2 if nothing is saved, but cap at 6 to prevent massive skeleton lists
+    return cached ? Math.min(Number(cached), 6) : 2;
+  });
+
+  // If we remember having items, start in "loading" mode to prevent the "Empty -> Data" flash
   const [savedMethods, setSavedMethods] = useState<Method[]>([]);
-  const [methodsLoading, setMethodsLoading] = useState(true);
+  const [methodsLoading, setMethodsLoading] = useState(() => {
+     return localStorage.getItem("saved_methods_count") !== "0";
+  });
 
   const [statsLoading, setStatsLoading] = useState(true);
   const [achievementsEarned, setAchievementsEarned] = useState(0);
@@ -35,18 +44,13 @@ export default function Home() {
   // OPTIMIZATION 1: Fetch Stats independently (Fast)
   useEffect(() => {
     let abort = false;
-    
-    // Don't reset loading to true here on re-renders to avoid UI flashing
-    // Only if we truly need to reload. For now, we keep the existing data visible.
 
     const loadStats = async () => {
       try {
-        // HEAD request is super fast
         const countPromise = supabase
           .from("methods")
           .select("id", { count: "exact", head: true });
 
-        // User stats
         const userStatsPromise = userId 
           ? Promise.all([
               getUserAchievements(userId),
@@ -54,7 +58,6 @@ export default function Home() {
             ])
           : Promise.resolve([[], 0] as const);
 
-        // Run these parallel
         const [countRes, [earnedIds, completed]] = await Promise.all([
           countPromise,
           userStatsPromise
@@ -76,20 +79,32 @@ export default function Home() {
     return () => { abort = true; };
   }, [userId]);
 
-  // OPTIMIZATION 2: Fetch Saved Methods independently (Slower)
+  // OPTIMIZATION 2: Fetch Saved Methods & Update LocalStorage Cache
   useEffect(() => {
     let abort = false;
     
-    // Only set loading if we actually have IDs to fetch
+    // If we have IDs from the hook, we are definitely loading
     if (savedIds.size > 0) {
       setMethodsLoading(true);
     } else {
-      setSavedMethods([]);
-      setMethodsLoading(false);
-      return;
+      // If hook says 0, but we haven't fetched yet, we might be in the initial hook-loading state.
+      // However, usually we can trust the hook. If 0, we show empty state.
+      // Only set to false if we didn't force it to true via state initialization
     }
 
     const loadSavedMethods = async () => {
+      // If the hook is still initializing (size 0) but we have a cache saying we have items,
+      // wait for the hook. (This logic relies on the hook updating savedIds eventually)
+      if (savedIds.size === 0) {
+         setSavedMethods([]);
+         setMethodsLoading(false);
+         // Update cache to 0 so next time we know it's empty
+         localStorage.setItem("saved_methods_count", "0");
+         return;
+      }
+
+      setMethodsLoading(true);
+
       try {
         const { data, error } = await supabase
           .from("methods")
@@ -97,7 +112,13 @@ export default function Home() {
           .in("id", Array.from(savedIds).map(Number));
 
         if (error) throw error;
-        if (!abort) setSavedMethods(data || []);
+        
+        if (!abort) {
+            const methods = data || [];
+            setSavedMethods(methods);
+            // SAVE TO LOCAL MEMORY: This ensures next load has the perfect skeleton count
+            localStorage.setItem("saved_methods_count", String(methods.length));
+        }
       } catch (error) {
         console.error("Error loading saved methods:", error);
       } finally {
@@ -112,11 +133,12 @@ export default function Home() {
   const deferredSavedMethods = useDeferredValue(savedMethods);
 
   const savedMethodsContent = useMemo(() => {
-    // 1. Loading State (Skeleton)
+    // 1. Loading State (Smart Skeleton)
     if (methodsLoading) {
       return (
-        <div className="grid grid-cols-2 gap-3">
-          {[1, 2].map((i) => (
+        <div className="grid grid-cols-2 gap-3" style={{ minHeight: '120px' }}>
+          {/* Dynamically create skeletons based on previous session count */}
+          {Array.from({ length: skeletonCount }).map((_, i) => (
             <div key={i} className="card h-24 bg-base-100 shadow-none border border-base-200 overflow-hidden">
                <div className="skeleton w-full h-24 rounded-none"></div>
             </div>
@@ -128,7 +150,7 @@ export default function Home() {
     // 2. Empty State
     if (deferredSavedMethods.length === 0) {
       return (
-        <p className="text-sm text-base-content/60 text-center py-4">
+        <p className="text-sm text-base-content/60 text-center py-4" style={{ minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           No saved methods yet. Start saving methods to see them here!
         </p>
       );
@@ -136,7 +158,8 @@ export default function Home() {
 
     // 3. Data State
     return (
-      <div className="grid grid-cols-2 gap-3" style={{ contain: 'layout' }}>
+      // contain: 'paint' is safer than 'layout' here to prevent collapsing if browser miscalculates
+      <div className="grid grid-cols-2 gap-3" style={{ contain: 'paint' }}>
         {deferredSavedMethods.map((method, index) => (
           <button
             key={method.id}
@@ -180,11 +203,11 @@ export default function Home() {
         ))}
       </div>
     );
-  }, [deferredSavedMethods, methodsLoading, navigate]);
+  }, [deferredSavedMethods, methodsLoading, navigate, skeletonCount]);
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-base-100 p-4 gap-4">
-      {/* Level Card - Always renders fast thanks to default 0 points */}
+      {/* Level Card */}
       <ProgressCard
         icon={TrendingUp}
         heading="Level"
@@ -195,7 +218,7 @@ export default function Home() {
         showProgressBar={true}
       />
 
-      {/* Stats Cards - With dedicated loading skeleton */}
+      {/* Stats Cards */}
       <div className="w-full flex flex-col gap-4">
         {statsLoading ? (
           <>
