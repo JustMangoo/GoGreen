@@ -12,7 +12,7 @@ import {
 import { Achievements } from "../constants/achievements";
 import type { Method } from "../services/methods";
 import { getLevelTier } from "../constants/levels";
-import { getThumbnailUrl } from "../utils/imageHelpers";
+import { getThumbnailUrl, getLQIPUrl } from "../utils/imageHelpers";
 
 export default function Home() {
   // 1. Separate Loading States to prevent "All-or-Nothing" blocking
@@ -117,8 +117,8 @@ export default function Home() {
       return (
         <div className="grid grid-cols-2 gap-3">
           {[1, 2].map((i) => (
-            <div key={i} className="card h-24 bg-base-100 shadow-none border border-base-200">
-               <div className="skeleton w-full h-full rounded-box opacity-50"></div>
+            <div key={i} className="card h-24 bg-base-100 shadow-none border border-base-200 overflow-hidden">
+               <div className="skeleton w-full h-24 rounded-none"></div>
             </div>
           ))}
         </div>
@@ -136,12 +136,17 @@ export default function Home() {
 
     // 3. Data State
     return (
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3" style={{ contain: 'layout' }}>
         {deferredSavedMethods.map((method, index) => (
           <button
             key={method.id}
             onClick={() => navigate(`/method-details?id=${method.id}`)}
             className="cursor-pointer card h-24 hover:shadow-lg transition-shadow text-left group relative overflow-hidden bg-base-100"
+            style={{
+              backgroundImage: `url('${getLQIPUrl(method.image_url, { width: 20, height: 9 })}')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
           >
             <img
               src={getThumbnailUrl(method.image_url, {
@@ -157,9 +162,9 @@ export default function Home() {
               ].join(", ")}
               sizes="(max-width: 480px) 44vw, (max-width: 1024px) 185px, 255px"
               alt={method.title}
-              // OPTIMIZATION 3: Eager load the top 2 images for better LCP
               loading={index < 2 ? "eager" : "lazy"}
               decoding="async"
+              fetchPriority={index < 2 ? "high" : "auto"}
               width={220}
               height={96}
               className="absolute inset-0 w-full h-full object-cover"
@@ -179,7 +184,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-base-100 p-4 gap-4">
-      {/* Level Card - Always renders fast thanks to Context */}
+      {/* Level Card - Always renders fast thanks to default 0 points */}
       <ProgressCard
         icon={TrendingUp}
         heading="Level"
@@ -233,7 +238,7 @@ export default function Home() {
       </div>
 
       {/* Saved Methods List */}
-      <div className="card card-border border-base-300 bg-base-200 w-full max-w-md p-3 gap-4">
+      <div className="card card-border border-base-300 bg-base-200 w-full max-w-md p-3 gap-4" style={{ contentVisibility: 'auto' }}>
         <div className="flex items-center gap-2">
           <div className="flex justify-center items-center border-base-300 border-2 bg-base-100 text-primary rounded-box w-12 h-12">
             <Heart size={20} />

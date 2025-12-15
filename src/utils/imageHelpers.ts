@@ -31,6 +31,33 @@ export function getThumbnailUrl(
 }
 
 /**
+ * Get low-quality image placeholder for blur-up effect (LQIP)
+ * Generates a tiny, heavily compressed version for fast loading
+ */
+export function getLQIPUrl(
+  imageUrl: string | undefined,
+  options: {
+    width?: number;
+    height?: number;
+  } = {}
+): string {
+  if (!imageUrl) return "";
+
+  const { width = 20, height = 9 } = options;
+
+  // Check if it's a Supabase Storage URL
+  if (imageUrl.includes("supabase.co/storage")) {
+    const url = new URL(imageUrl);
+    url.searchParams.set("width", width.toString());
+    url.searchParams.set("height", height.toString());
+    url.searchParams.set("quality", "10");
+    return url.toString();
+  }
+
+  return "";
+}
+
+/**
  * Get full-size image URL (higher quality for detail pages)
  */
 export function getFullSizeUrl(
