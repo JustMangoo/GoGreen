@@ -5,7 +5,7 @@ import {
   removeSavedMethod,
 } from "../services/savedMethods";
 import { useAuth } from "./useAuth";
-import { checkAndAwardAchievements } from "../services/checkAchievements";
+import { checkAndAwardAchievements } from "../services/achievements";
 
 export function useSavedMethods() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());

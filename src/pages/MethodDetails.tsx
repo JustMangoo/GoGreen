@@ -6,12 +6,12 @@ import { useSavedMethods } from "../hooks/useSavedMethods";
 import {
   completeMethod,
   isMethodCompleted,
-} from "../services/achievementOperations";
+  checkAndAwardAchievements,
+} from "../services/achievements";
 import { supabase } from "../lib/supabaseClient";
 import { ArrowLeft, Heart, Clock, Tag, Trophy, Edit } from "lucide-react";
 import AddMethodForm from "../components/Tools/AddMethodForm";
 import AchievementPopup from "../components/Tools/AchievementPopup";
-import { checkAndAwardAchievements } from "../services/checkAchievements";
 import { getFullSizeUrl } from "../utils/imageHelpers";
 
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL;

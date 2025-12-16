@@ -8,7 +8,7 @@ import { useUserProfile } from "../hooks/useUserProfile";
 import {
   getUserAchievements,
   getCompletedMethodsCount,
-} from "../services/achievementOperations";
+} from "../services/achievements";
 import { Achievements } from "../constants/achievements";
 import type { Method } from "../services/methods";
 import { getLevelTier } from "../constants/levels";
@@ -208,15 +208,17 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-base-100 p-4 gap-4">
       {/* Level Card */}
-      <ProgressCard
-        icon={TrendingUp}
-        heading="Level"
-        subheading={levelTier.name}
-        progressLabel="Next Level"
-        progressCurrent={points}
-        progressMax={levelTier.maxPoints}
-        showProgressBar={true}
-      />
+      <div style={{ minHeight: '128px', width: '100%' }}>
+        <ProgressCard
+          icon={TrendingUp}
+          heading="Level"
+          subheading={levelTier.name}
+          progressLabel="Next Level"
+          progressCurrent={points}
+          progressMax={levelTier.maxPoints}
+          showProgressBar={true}
+        />
+      </div>
 
       {/* Stats Cards */}
       <div className="w-full flex flex-col gap-4" style={{ minHeight: '272px' }}>
@@ -227,37 +229,41 @@ export default function Home() {
           </>
         ) : (
           <>
-            <Link
-              to="/methods"
-              prefetch="intent"
-              className="w-full block cursor-pointer"
-            >
-              <ProgressCard
-                icon={BookOpen}
-                heading="Mastered Methods"
-                subheading="Master More →"
-                progressLabel="Completed"
-                progressCurrent={completedCount}
-                progressMax={Math.max(totalMethods, 1)}
-                showProgressBar={true}
-              />
-            </Link>
+            <div style={{ minHeight: '128px' }}>
+              <Link
+                to="/methods"
+                prefetch="intent"
+                className="w-full block cursor-pointer"
+              >
+                <ProgressCard
+                  icon={BookOpen}
+                  heading="Mastered Methods"
+                  subheading="Master More →"
+                  progressLabel="Completed"
+                  progressCurrent={completedCount}
+                  progressMax={Math.max(totalMethods, 1)}
+                  showProgressBar={true}
+                />
+              </Link>
+            </div>
 
-            <Link
-              to="/achievements"
-              prefetch="intent"
-              className="w-full block cursor-pointer"
-            >
-              <ProgressCard
-                icon={Award}
-                heading="Achievements"
-                subheading="View All →"
-                progressLabel="Unlocked"
-                progressCurrent={achievementsEarned}
-                progressMax={achievementsTotal}
-                showProgressBar={true}
-              />
-            </Link>
+            <div style={{ minHeight: '128px' }}>
+              <Link
+                to="/achievements"
+                prefetch="intent"
+                className="w-full block cursor-pointer"
+              >
+                <ProgressCard
+                  icon={Award}
+                  heading="Achievements"
+                  subheading="View All →"
+                  progressLabel="Unlocked"
+                  progressCurrent={achievementsEarned}
+                  progressMax={achievementsTotal}
+                  showProgressBar={true}
+                />
+              </Link>
+            </div>
           </>
         )}
       </div>

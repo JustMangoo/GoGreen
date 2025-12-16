@@ -12,7 +12,7 @@ import {
   getCompletedCategories,
   hasLearnedAllMethods,
   awardAchievement,
-} from "../services/achievementOperations";
+} from "../services/achievements";
 import { useSavedMethods } from "../hooks/useSavedMethods";
 
 interface AchievementProgress {
