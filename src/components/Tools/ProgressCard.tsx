@@ -45,7 +45,7 @@ export default function ProgressCard({
           <div className="flex flex-row justify-between text-sm mb-1">
             <p className="text-base-content/60">{progressLabel}</p>
             <p className="font-medium">
-              {progressCurrent}/{progressMax}
+              {progressCurrent}/{progressMax === Infinity ? '∞' : progressMax}
             </p>
           </div>
           <div className="flex h-2 bg-base-300 rounded-box overflow-hidden">
@@ -57,7 +57,7 @@ export default function ProgressCard({
         </div>
       )}
 
-      {/* Custom Content */}
+   {/* Custom Content */}
       {children}
     </div>
   );

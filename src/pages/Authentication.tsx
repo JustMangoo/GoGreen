@@ -191,7 +191,7 @@ export default function Authentication() {
         </div>
 
         <div className="text-center mt-6 text-sm opacity-60">
-          <p>GoGreen - Learn Food Preservation Methods</p>
+          <p>PickleIt - Learn Food Preservation Methods</p>
         </div>
       </div>
     </div>
