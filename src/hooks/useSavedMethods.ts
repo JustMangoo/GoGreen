@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabaseClient";
 import {
   getSavedMethodIds,
   addSavedMethod,
   removeSavedMethod,
 } from "../services/savedMethods";
+import { useAuth } from "./useAuth";
 import { checkAndAwardAchievements } from "../services/checkAchievements";
 
 export function useSavedMethods() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+  const { userId } = useAuth();
   const [newAchievements, setNewAchievements] = useState<
     Array<{
       id: string;
@@ -21,29 +21,6 @@ export function useSavedMethods() {
     }>
   >([]);
 
-  // 1. Listen for Auth Changes
-  useEffect(() => {
-    let abort = false;
-
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (abort) return;
-
-      if (session?.user) {
-        setUserId(session.user.id);
-      } else {
-        setUserId(null);
-        setSavedIds(new Set());
-      }
-    });
-
-    return () => {
-      abort = true;
-      subscription.unsubscribe();
-    };
-  }, []);
 
   // 2. Load saved methods whenever userId changes
   useEffect(() => {
