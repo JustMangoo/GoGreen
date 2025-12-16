@@ -164,6 +164,7 @@ export default function Home() {
             key={method.id}
             to={`/method-details?id=${method.id}`}
             prefetch="intent"
+            aria-label={`View details for ${method.title} in ${method.category} category`}
             className="cursor-pointer card h-24 hover:shadow-lg transition-shadow text-left group relative overflow-hidden bg-base-100"
             style={{
               backgroundImage: `url('${getLQIPUrl(method.image_url, { width: 20, height: 9 })}')`,
@@ -206,9 +207,9 @@ export default function Home() {
   }, [deferredSavedMethods, methodsLoading, skeletonCount]);
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen bg-base-100 p-4 gap-4">
+    <main className="flex flex-col items-center justify-start min-h-screen bg-base-100 p-4 gap-4">
       {/* Level Card */}
-      <div style={{ minHeight: '128px', width: '100%' }}>
+      <section aria-labelledby="level-heading" style={{ minHeight: '128px', width: '100%' }}>
         <ProgressCard
           icon={TrendingUp}
           heading="Level"
@@ -218,10 +219,11 @@ export default function Home() {
           progressMax={levelTier.maxPoints}
           showProgressBar={true}
         />
-      </div>
+      </section>
 
       {/* Stats Cards */}
-      <div className="w-full flex flex-col gap-4" style={{ minHeight: '272px' }}>
+      <section aria-labelledby="stats-heading" className="w-full flex flex-col gap-4" style={{ minHeight: '272px' }}>
+        <h2 id="stats-heading" className="sr-only">Your Progress Statistics</h2>
         {statsLoading ? (
           <>
             <div className="w-full h-32 skeleton rounded-box opacity-40"></div>
@@ -234,6 +236,7 @@ export default function Home() {
                 to="/methods"
                 prefetch="intent"
                 className="w-full block cursor-pointer"
+                aria-label="View all methods and track your progress"
               >
                 <ProgressCard
                   icon={BookOpen}
@@ -252,6 +255,7 @@ export default function Home() {
                 to="/achievements"
                 prefetch="intent"
                 className="w-full block cursor-pointer"
+                aria-label="View all achievements and your unlocked badges"
               >
                 <ProgressCard
                   icon={Award}
@@ -266,18 +270,18 @@ export default function Home() {
             </div>
           </>
         )}
-      </div>
+      </section>
 
       {/* Saved Methods List */}
-      <div className="card card-border border-base-300 bg-base-200 w-full max-w-md p-3 gap-4" style={{ contentVisibility: 'auto' }}>
+      <section aria-labelledby="saved-methods-heading" className="card card-border border-base-300 bg-base-200 w-full max-w-md p-3 gap-4" style={{ contentVisibility: 'auto' }}>
         <div className="flex items-center gap-2">
-          <div className="flex justify-center items-center border-base-300 border-2 bg-base-100 text-primary rounded-box w-12 h-12">
+          <div className="flex justify-center items-center border-base-300 border-2 bg-base-100 text-primary rounded-box w-12 h-12" aria-hidden="true">
             <Heart size={20} />
           </div>
-          <h2 className="font-semibold text-lg">Saved Methods</h2>
+          <h2 id="saved-methods-heading" className="font-semibold text-lg">Saved Methods</h2>
         </div>
         {savedMethodsContent}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
