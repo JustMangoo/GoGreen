@@ -11,7 +11,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let abort = false;
@@ -22,7 +21,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       .then(({ data: { session } }: { data: { session: Session | null } }) => {
         if (!abort) {
           setSession(session);
-          setLoading(false);
           if (!session) {
             navigate("/auth");
           }
@@ -57,13 +55,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }, [location.pathname]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-base-100">
-        <div className="loading loading-spinner loading-lg"></div>
-      </div>
-    );
-  }
+ 
 
   if (!session) {
     return null;
