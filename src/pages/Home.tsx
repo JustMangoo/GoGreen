@@ -16,67 +16,45 @@ import { getCompletedMethodsCount } from "../services/methods";
 import { Achievements } from "../constants/achievements";
 
 import { getThumbnailUrl, getLQIPUrl } from "../utils/imageHelpers";
-
-// LocalStorage keys for cached stats
-const LS_KEYS = {
-  achievementsTotal: "achievements_total",
-  achievementsEarned: "achievements_earned",
-  totalMethods: "total_methods_count",
-  completedMethods: "completed_methods_count",
-  userPointsPrefix: "user_points_",
-  userLevelTitlePrefix: "user_level_title_",
-} as const;
+import { getStatsCache, setStatsCache } from "../services/statsCache";
 
 export default function Home() {
   // STRATEGY: Read from LocalStorage immediately to predict the layout
   const [skeletonCount] = useState(() => {
-    const cached = localStorage.getItem("saved_methods_count");
-    return cached ? Math.min(Number(cached), 6) : 4;
+    const { savedMethodsCount } = getStatsCache();
+    return Math.min(savedMethodsCount, 6) || 4;
   });
 
   // If we remember having items, start in "loading" mode to prevent the "Empty -> Data" flash
   const [savedMethods, setSavedMethods] = useState<Method[]>([]);
   const [methodsLoading, setMethodsLoading] = useState(() => {
-     return localStorage.getItem("saved_methods_count") !== "0";
+    const { savedMethodsCount } = getStatsCache();
+    return savedMethodsCount !== 0;
   });
 
   // Seed stats from LocalStorage first for instant paint
-  const cachedAchievementsEarned = (() => {
-    const v = localStorage.getItem(LS_KEYS.achievementsEarned);
-    return v ? Number(v) : 0;
-  })();
-  const cachedCompletedCount = (() => {
-    const v = localStorage.getItem(LS_KEYS.completedMethods);
-    return v ? Number(v) : 0;
-  })();
-  const cachedTotalMethods = (() => {
-    const v = localStorage.getItem(LS_KEYS.totalMethods);
-    return v ? Number(v) : 0;
-  })();
+  const cachedStats = getStatsCache();
 
   const [statsLoading, setStatsLoading] = useState(() => {
     // If we have any cached stats, show them immediately (no skeleton)
-    const hasCache =
-      localStorage.getItem(LS_KEYS.achievementsEarned) ||
-      localStorage.getItem(LS_KEYS.completedMethods) ||
-      localStorage.getItem(LS_KEYS.totalMethods);
-    return !hasCache;
+    return cachedStats.achievementsEarned === 0 && 
+           cachedStats.completedMethods === 0 && 
+           cachedStats.totalMethods === 0;
   });
-  const [achievementsEarned, setAchievementsEarned] = useState(cachedAchievementsEarned);
-  const [completedCount, setCompletedCount] = useState(cachedCompletedCount);
-  const [totalMethods, setTotalMethods] = useState(cachedTotalMethods);
+  const [achievementsEarned, setAchievementsEarned] = useState(cachedStats.achievementsEarned);
+  const [completedCount, setCompletedCount] = useState(cachedStats.completedMethods);
+  const [totalMethods, setTotalMethods] = useState(cachedStats.totalMethods);
 
   const { savedIds } = useSavedMethods();
-  const { profile, userId } = useUserProfile();
+  const { userId } = useUserProfile();
   const { points, levelTitle, levelTier } = useUserProgress();
 
   const achievementsTotal = Achievements.length;
 
   // Keep achievements total cached for consistency
   useEffect(() => {
-    localStorage.setItem(LS_KEYS.achievementsTotal, String(achievementsTotal));
+    setStatsCache({ achievementsTotal });
   }, [achievementsTotal]);
-
 
   // OPTIMIZATION 1: Fetch Stats independently (Fast)
   useEffect(() => {
@@ -112,9 +90,11 @@ export default function Home() {
         setCompletedCount(completedCountRes);
 
         // Sync LocalStorage cache
-        localStorage.setItem(LS_KEYS.totalMethods, String(methodsCount));
-        localStorage.setItem(LS_KEYS.achievementsEarned, String(earnedCount));
-        localStorage.setItem(LS_KEYS.completedMethods, String(completedCountRes));
+        setStatsCache({
+          totalMethods: methodsCount,
+          achievementsEarned: earnedCount,
+          completedMethods: completedCountRes,
+        });
       } catch (error) {
         console.error("Error loading stats:", error);
       } finally {
@@ -133,10 +113,6 @@ export default function Home() {
     // If we have IDs from the hook, we are definitely loading
     if (savedIds.size > 0) {
       setMethodsLoading(true);
-    } else {
-      // If hook says 0, but we haven't fetched yet, we might be in the initial hook-loading state.
-      // However, usually we can trust the hook. If 0, we show empty state.
-      // Only set to false if we didn't force it to true via state initialization
     }
 
     const loadSavedMethods = async () => {
@@ -145,7 +121,7 @@ export default function Home() {
          setSavedMethods([]);
          setMethodsLoading(false);
          // Update cache to 0 so next time we know it's empty
-         localStorage.setItem("saved_methods_count", "0");
+         setStatsCache({ savedMethodsCount: 0 });
          return;
       }
 
@@ -163,7 +139,7 @@ export default function Home() {
             const methods = data || [];
             setSavedMethods(methods);
             // SAVE TO LOCAL MEMORY: This ensures next load has the perfect skeleton count
-            localStorage.setItem("saved_methods_count", String(methods.length));
+            setStatsCache({ savedMethodsCount: methods.length });
         }
       } catch (error) {
         console.error("Error loading saved methods:", error);
@@ -178,20 +154,20 @@ export default function Home() {
 
   const deferredSavedMethods = useDeferredValue(savedMethods);
 
-    const savedMethodsContent = useMemo(() => {
-      // 1. Loading State (Smart Skeleton)
-      if (methodsLoading) {
-        return (
-          <div className="grid grid-cols-2 gap-3" style={{ minHeight: '120px' }}>
-            {/* Dynamically create skeletons based on previous session count */}
-            {Array.from({ length: skeletonCount }).map((_, i) => (
-              <div key={i} className="focus:outline-2 card h-24 bg-base-100 shadow-none border border-base-200">
-                <div className="skeleton w-full h-24 rounded-none"></div>
-              </div>
-            ))}
-          </div>
-        );
-      }
+  const savedMethodsContent = useMemo(() => {
+    // 1. Loading State (Smart Skeleton)
+    if (methodsLoading) {
+      return (
+        <div className="grid grid-cols-2 gap-3" style={{ minHeight: '120px' }}>
+          {/* Dynamically create skeletons based on previous session count */}
+          {Array.from({ length: skeletonCount }).map((_, i) => (
+            <div key={i} className="focus:outline-2 card h-24 bg-base-100 shadow-none border border-base-200">
+              <div className="skeleton w-full h-24 rounded-none"></div>
+            </div>
+          ))}
+        </div>
+      );
+    }
 
     // 2. Empty State
     if (deferredSavedMethods.length === 0) {
