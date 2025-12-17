@@ -14,19 +14,29 @@ export function getThumbnailUrl(
 
   if (!imageUrl) return fallback;
 
-  const { width = 400, height = 300, quality = 55 } = options;
+  // AVIF maintains detail better at lower quality settings than JPEG
+  const { width = 400, height = 300, quality = 50 } = options;
 
   // Check if it's a Supabase Storage URL
   if (imageUrl.includes("supabase.co/storage")) {
-    // Add transformation parameters
     const url = new URL(imageUrl);
+    
+    // Add transformation parameters
     url.searchParams.set("width", width.toString());
     url.searchParams.set("height", height.toString());
     url.searchParams.set("quality", quality.toString());
+    
+    // PERFORMANCE WIN: Force AVIF format for superior compression (LCP optimization)
+    // AVIF is generally significantly smaller than WebP
+    url.searchParams.set("format", "avif");
+    
+    // Ensure we resize to cover the dimensions (prevents distortion)
+    url.searchParams.set("resize", "cover");
+    
     return url.toString();
   }
 
-  // For external URLs, return as-is (could add other CDN transformations here)
+  // For external URLs, return as-is
   return imageUrl;
 }
 
@@ -45,12 +55,13 @@ export function getLQIPUrl(
 
   const { width = 20, height = 9 } = options;
 
-  // Check if it's a Supabase Storage URL
   if (imageUrl.includes("supabase.co/storage")) {
     const url = new URL(imageUrl);
     url.searchParams.set("width", width.toString());
     url.searchParams.set("height", height.toString());
-    url.searchParams.set("quality", "10");
+    // AVIF at quality 10 is very small but still recognizable as a blur
+    url.searchParams.set("quality", "10"); 
+    url.searchParams.set("format", "avif"); 
     return url.toString();
   }
 
@@ -62,16 +73,16 @@ export function getLQIPUrl(
  */
 export function getFullSizeUrl(
   imageUrl: string | undefined,
-  quality: number = 85
+  quality: number = 80
 ): string {
   const fallback = "https://placehold.co/400x300";
 
   if (!imageUrl) return fallback;
 
-  // Check if it's a Supabase Storage URL
   if (imageUrl.includes("supabase.co/storage")) {
     const url = new URL(imageUrl);
     url.searchParams.set("quality", quality.toString());
+    url.searchParams.set("format", "avif");
     return url.toString();
   }
 

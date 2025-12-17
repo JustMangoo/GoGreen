@@ -3,12 +3,15 @@ import { Link } from "react-router";
 import { TrendingUp, Award, BookOpen, Heart } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 
+// Components
 import ProgressCard from "../components/Tools/ProgressCard";
 
+// Hooks
 import { useSavedMethods } from "../hooks/useSavedMethods";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { useUserProgress } from "../hooks/useUserProgress";
 
+// Services & Utils
 import { getUserAchievements } from "../services/achievements";
 import { getCompletedMethodsCount } from "../services/methods";
 import { getStatsCache, setStatsCache } from "../services/statsCache";
@@ -18,38 +21,51 @@ import { Achievements } from "../constants/achievements";
 import type { Method } from "../services/methods";
 
 export default function Home() {
+  // --- Hooks ---
   const { savedIds } = useSavedMethods();
   const { userId, profile } = useUserProfile();
   const { points, levelTitle, levelTier } = useUserProgress();
   
-  // Keep loading until profile is actually loaded to prevent cached title flash
-  const isLevelLoading = !levelTitle || !profile;
+  // --- Initialization ---
   const achievementsTotal = Achievements.length;
-
-  // --- State Initialization (Cache-First) ---
-
   const cachedStats = getStatsCache();
   
+  // Level Loading: Wait for profile data
+  const isLevelLoading = !levelTitle || !profile;
+
+  // Stats State
   const [totalMethods, setTotalMethods] = useState(cachedStats.totalMethods);
   const [achievementsEarned, setAchievementsEarned] = useState(cachedStats.achievementsEarned);
   const [completedCount, setCompletedCount] = useState(cachedStats.completedMethods);
-  const [savedMethods, setSavedMethods] = useState<Method[]>([]);
-
-  // Only show stats skeleton if cache is completely empty
+  
+  // Stats Loading: Only if cache is completely empty
   const [statsLoading, setStatsLoading] = useState(() => 
     cachedStats.achievementsEarned === 0 && 
     cachedStats.completedMethods === 0 && 
     cachedStats.totalMethods === 0
   );
 
-  // Trust cache for saved methods to prevent "Empty -> Data" flash
-  // Start with loading=true unless cache explicitly says 0 AND we're logged in
+  // Saved Methods State (LCP Optimized)
+  const [savedMethods, setSavedMethods] = useState<Method[]>(() => {
+    try {
+      const cached = localStorage.getItem("cached_saved_methods_data");
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Methods Loading: Trust cache/localstorage first
   const [methodsLoading, setMethodsLoading] = useState(() => {
+    const hasCachedData = !!localStorage.getItem("cached_saved_methods_data");
+    if (hasCachedData) return false;
+
     const { savedMethodsCount } = getStatsCache();
-    // Only show empty immediately if cache says 0 AND user is already known
+    // Only show loading if we expect data, or if we don't know the user yet
     return savedMethodsCount !== 0 || !userId;
   });
 
+  // Skeleton Count Prediction
   const [skeletonCount] = useState(() => {
     const { savedMethodsCount } = getStatsCache();
     return Math.min(savedMethodsCount || 4, 6);
@@ -57,7 +73,7 @@ export default function Home() {
 
   // --- Effects ---
 
-  // 1. Load Dashboard Stats
+  // 1. Fetch Dashboard Stats (Parallel)
   useEffect(() => {
     let abort = false;
 
@@ -106,18 +122,22 @@ export default function Home() {
     return () => { abort = true; };
   }, [userId]);
 
-  // 2. Load Saved Methods
+  // 2. Fetch Saved Methods
   useEffect(() => {
     let abort = false;
-    
-    if (savedIds.size > 0) {
+
+    // Loading Logic:
+    // If we have cached images, we don't set loading=true (keeps UI stable).
+    // If cache is empty but hooks say we have IDs, we must load.
+    if (savedMethods.length === 0 && savedIds.size > 0) {
       setMethodsLoading(true);
     } 
-    // Only confirm "Empty" if we have a userId (auth loaded) and truly 0 IDs
-    else if (savedIds.size === 0 && userId) {
+    // Empty Logic: Only valid if we are logged in (userId exists) and have 0 IDs
+    else if (savedIds.size === 0 && userId && savedMethods.length === 0) {
       setSavedMethods([]);
       setMethodsLoading(false);
       setStatsCache({ savedMethodsCount: 0 });
+      localStorage.removeItem("cached_saved_methods_data");
       return;
     }
 
@@ -136,6 +156,7 @@ export default function Home() {
           const methods = data || [];
           setSavedMethods(methods);
           setStatsCache({ savedMethodsCount: methods.length });
+          localStorage.setItem("cached_saved_methods_data", JSON.stringify(methods));
         }
       } catch (error) {
         console.error("Error loading saved methods:", error);
@@ -146,13 +167,14 @@ export default function Home() {
 
     loadSavedMethods();
     return () => { abort = true; };
-  }, [savedIds, userId]);
+  }, [savedIds, userId]); // savedMethods dependency intentionally omitted
 
-  // --- Render Helpers ---
+  // --- Render ---
 
   const deferredSavedMethods = useDeferredValue(savedMethods);
 
   const savedMethodsContent = useMemo(() => {
+    // 1. Loading State (Grid Skeleton)
     if (methodsLoading) {
       return (
         <div className="grid grid-cols-2 gap-3" style={{ minHeight: '120px' }}>
@@ -165,6 +187,7 @@ export default function Home() {
       );
     }
 
+    // 2. Empty State
     if (deferredSavedMethods.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-8 text-center min-h-[120px]">
@@ -176,6 +199,7 @@ export default function Home() {
       );
     }
 
+    // 3. Data State
     return (
       <div className="grid grid-cols-2 gap-3">
         {deferredSavedMethods.map((method, index) => (
@@ -215,12 +239,10 @@ export default function Home() {
     );
   }, [deferredSavedMethods, methodsLoading, skeletonCount]);
 
-  // --- Main Render ---
-
   return (
     <main className="flex flex-col items-center justify-start min-h-screen bg-base-100 p-4 gap-4">
       
-      {/* Level Progress */}
+      {/* SECTION 1: Level Progress */}
       <section aria-labelledby="level-heading" className="w-full">
         <ProgressCard
           icon={TrendingUp}
@@ -234,43 +256,36 @@ export default function Home() {
         />
       </section>
 
-      {/* Statistics */}
+      {/* SECTION 2: Statistics */}
       <section aria-label="Statistics" className="w-full flex flex-col gap-4">
-        {statsLoading ? (
-          <>
-            <div className="skeleton w-full h-32 rounded-2xl"></div>
-            <div className="skeleton w-full h-32 rounded-2xl"></div>
-          </>
-        ) : (
-          <>
-            <Link to="/methods" prefetch="intent" className="block w-full" aria-label="View mastered methods">
-              <ProgressCard
-                icon={BookOpen}
-                heading="Mastered Methods"
-                subheading="Master More →"
-                progressLabel="Completed"
-                progressCurrent={completedCount}
-                progressMax={Math.max(totalMethods, 1)}
-                showProgressBar={true}
-              />
-            </Link>
+        <Link to="/methods" prefetch="intent" className="block w-full" aria-label="View mastered methods">
+          <ProgressCard
+            icon={BookOpen}
+            heading="Mastered Methods"
+            subheading="Master More →"
+            progressLabel="Completed"
+            progressCurrent={completedCount}
+            progressMax={Math.max(totalMethods, 1)}
+            showProgressBar={true}
+            loading={statsLoading}
+          />
+        </Link>
 
-            <Link to="/achievements" prefetch="intent" className="block w-full" aria-label="View achievements">
-              <ProgressCard
-                icon={Award}
-                heading="Achievements"
-                subheading="View All →"
-                progressLabel="Unlocked"
-                progressCurrent={achievementsEarned}
-                progressMax={achievementsTotal}
-                showProgressBar={true}
-              />
-            </Link>
-          </>
-        )}
+        <Link to="/achievements" prefetch="intent" className="block w-full" aria-label="View achievements">
+          <ProgressCard
+            icon={Award}
+            heading="Achievements"
+            subheading="View All →"
+            progressLabel="Unlocked"
+            progressCurrent={achievementsEarned}
+            progressMax={achievementsTotal}
+            showProgressBar={true}
+            loading={statsLoading}
+          />
+        </Link>
       </section>
 
-      {/* Saved Methods */}
+      {/* SECTION 3: Saved Methods */}
       <section 
         aria-labelledby="saved-methods-heading" 
         className="card card-border border-base-200 bg-base-200/50 w-full max-w-md p-3 gap-4"
