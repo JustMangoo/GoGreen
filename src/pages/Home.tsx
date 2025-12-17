@@ -138,7 +138,7 @@ export default function Home() {
         <div className="grid grid-cols-2 gap-3" style={{ minHeight: '120px' }}>
           {/* Dynamically create skeletons based on previous session count */}
           {Array.from({ length: skeletonCount }).map((_, i) => (
-            <div key={i} className="card h-24 bg-base-100 shadow-none border border-base-200 overflow-hidden">
+            <div key={i} className="focus:outline-2 card h-24 bg-base-100 shadow-none border border-base-200">
                <div className="skeleton w-full h-24 rounded-none"></div>
             </div>
           ))}
@@ -158,47 +158,51 @@ export default function Home() {
     // 3. Data State
     return (
       // contain: 'paint' is safer than 'layout' here to prevent collapsing if browser miscalculates
-      <div className="grid grid-cols-2 gap-3" style={{ contain: 'paint' }}>
+      <div className="grid grid-cols-2 gap-3">
         {deferredSavedMethods.map((method, index) => (
           <Link
             key={method.id}
             to={`/method-details?id=${method.id}`}
             prefetch="intent"
             aria-label={`View details for ${method.title} in ${method.category} category`}
-            className="cursor-pointer card h-24 hover:shadow-lg transition-shadow text-left group relative overflow-hidden bg-base-100"
-            style={{
-              backgroundImage: `url('${getLQIPUrl(method.image_url, { width: 20, height: 9 })}')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
+            className="cursor-pointer rounded-2xl h-24 transition-shadow text-left group relative bg-base-100 shadow-sm block"
           >
-            <img
-              src={getThumbnailUrl(method.image_url, {
-                width: 220,
-                height: 96,
-                quality: 25,
-              })}
-              srcSet={[
-                `${getThumbnailUrl(method.image_url, { width: 180, height: 96, quality: 22 })} 180w`,
-                `${getThumbnailUrl(method.image_url, { width: 220, height: 96, quality: 25 })} 220w`,
-                `${getThumbnailUrl(method.image_url, { width: 320, height: 144, quality: 35 })} 320w`,
-                `${getThumbnailUrl(method.image_url, { width: 400, height: 192, quality: 60 })} 400w`,
-              ].join(", ")}
-              sizes="(max-width: 480px) 44vw, (max-width: 1024px) 185px, 255px"
-              alt={method.title}
-              loading={index < 2 ? "eager" : "lazy"}
-              decoding="async"
-              fetchPriority={index < 2 ? "high" : "auto"}
-              width={220}
-              height={96}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            {/* Dark overlay for text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-3">
-              <p className="font-semibold text-sm line-clamp-1 text-white shadow-sm">
-                {method.title}
-              </p>
-              <span className="text-[10px] text-gray-200">{method.category}</span>
+            <div 
+              className="absolute inset-0 overflow-hidden rounded-2xl"
+              style={{
+                backgroundImage: `url('${getLQIPUrl(method.image_url, { width: 20, height: 9 })}')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            >
+              <img
+                src={getThumbnailUrl(method.image_url, {
+                  width: 220,
+                  height: 96,
+                  quality: 25,
+                })}
+                srcSet={[
+                  `${getThumbnailUrl(method.image_url, { width: 180, height: 96, quality: 22 })} 180w`,
+                  `${getThumbnailUrl(method.image_url, { width: 220, height: 96, quality: 25 })} 220w`,
+                  `${getThumbnailUrl(method.image_url, { width: 320, height: 144, quality: 35 })} 320w`,
+                  `${getThumbnailUrl(method.image_url, { width: 400, height: 192, quality: 60 })} 400w`,
+                ].join(", ")}
+                sizes="(max-width: 480px) 44vw, (max-width: 1024px) 185px, 255px"
+                alt={method.title}
+                loading={index < 2 ? "eager" : "lazy"}
+                decoding="async"
+                fetchPriority={index < 2 ? "high" : "auto"}
+                width={220}
+                height={96}
+                className="w-full h-full object-cover"
+              />
+              {/* Dark overlay for text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-3">
+                <p className="font-semibold text-sm line-clamp-1 text-white shadow-sm">
+                  {method.title}
+                </p>
+                <span className="text-[10px] text-gray-200">{method.category}</span>
+              </div>
             </div>
           </Link>
         ))}
@@ -273,7 +277,7 @@ export default function Home() {
       </section>
 
       {/* Saved Methods List */}
-      <section aria-labelledby="saved-methods-heading" className="card card-border border-base-300 bg-base-200 w-full max-w-md p-3 gap-4" style={{ contentVisibility: 'auto' }}>
+      <section aria-labelledby="saved-methods-heading" className="overflow-auto card card-border border-base-300 bg-base-200 w-full max-w-md p-3 gap-4" style={{ contentVisibility: 'auto' }}>
         <div className="flex items-center gap-2">
           <div className="flex justify-center items-center border-base-300 border-2 bg-base-100 text-primary rounded-box w-12 h-12" aria-hidden="true">
             <Heart size={20} />

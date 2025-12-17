@@ -46,6 +46,11 @@
   overflow: hidden;
 }
 
+*:focus-visible {
+  outline-offset: 2px;
+  outline: 2px solid black;
+}
+
 /* Screen reader only - accessible but visually hidden */
 .sr-only {
   position: absolute;

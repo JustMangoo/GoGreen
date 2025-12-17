@@ -156,7 +156,7 @@ export default function MethodList() {
                   navigate(`/method-details?id=${method.id}`);
                 }
               }}
-              className="card  bg-base-100 image-full shadow-sm h-48 w-full cursor-pointer hover:shadow-lg transition-shadow"
+              className="card bg-base-100 image-full shadow-sm h-48 w-full cursor-pointer transition-shadow"
             >
               <figure>
                 <img
