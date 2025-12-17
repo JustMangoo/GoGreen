@@ -20,7 +20,7 @@ export function useUserProgress() {
   useEffect(() => {
     if (!userId) {
       setPoints(0);
-      setLevelTitle("Level Title");
+      setLevelTitle("");
       return;
     }
     const cachedPoints = getUserPointsCache(userId);
