@@ -1,25 +1,37 @@
-import ProgressCard from "../components/Tools/ProgressCard";
-import { TrendingUp, Award, BookOpen, Heart } from "lucide-react";
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
 import { supabase } from "../lib/supabaseClient";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { TrendingUp, Award, BookOpen, Heart } from "lucide-react";
+import ProgressCard from "../components/Tools/ProgressCard";
+import { Link } from "react-router";
+
 import { useSavedMethods } from "../hooks/useSavedMethods";
 import { useUserProfile } from "../hooks/useUserProfile";
-import {
-  getUserAchievements,
-  getCompletedMethodsCount,
-} from "../services/achievements";
-import { Achievements } from "../constants/achievements";
+import { useUserProgress } from "../hooks/useUserProgress";
+
 import type { Method } from "../services/methods";
-import { getLevelTier } from "../constants/levels";
+
+import { getUserAchievements } from "../services/achievements";
+import { getCompletedMethodsCount } from "../services/methods";
+
+import { Achievements } from "../constants/achievements";
+
 import { getThumbnailUrl, getLQIPUrl } from "../utils/imageHelpers";
 
+// LocalStorage keys for cached stats
+const LS_KEYS = {
+  achievementsTotal: "achievements_total",
+  achievementsEarned: "achievements_earned",
+  totalMethods: "total_methods_count",
+  completedMethods: "completed_methods_count",
+  userPointsPrefix: "user_points_",
+  userLevelTitlePrefix: "user_level_title_",
+} as const;
+
 export default function Home() {
-  // STRATEGY: Read from LocalStorage immediately to predict the layout height
+  // STRATEGY: Read from LocalStorage immediately to predict the layout
   const [skeletonCount] = useState(() => {
     const cached = localStorage.getItem("saved_methods_count");
-    // Default to 2 if nothing is saved, but cap at 6 to prevent massive skeleton lists
-    return cached ? Math.min(Number(cached), 6) : 2;
+    return cached ? Math.min(Number(cached), 6) : 4;
   });
 
   // If we remember having items, start in "loading" mode to prevent the "Empty -> Data" flash
@@ -28,17 +40,43 @@ export default function Home() {
      return localStorage.getItem("saved_methods_count") !== "0";
   });
 
-  const [statsLoading, setStatsLoading] = useState(true);
-  const [achievementsEarned, setAchievementsEarned] = useState(0);
-  const [completedCount, setCompletedCount] = useState(0);
-  const [totalMethods, setTotalMethods] = useState(0);
+  // Seed stats from LocalStorage first for instant paint
+  const cachedAchievementsEarned = (() => {
+    const v = localStorage.getItem(LS_KEYS.achievementsEarned);
+    return v ? Number(v) : 0;
+  })();
+  const cachedCompletedCount = (() => {
+    const v = localStorage.getItem(LS_KEYS.completedMethods);
+    return v ? Number(v) : 0;
+  })();
+  const cachedTotalMethods = (() => {
+    const v = localStorage.getItem(LS_KEYS.totalMethods);
+    return v ? Number(v) : 0;
+  })();
+
+  const [statsLoading, setStatsLoading] = useState(() => {
+    // If we have any cached stats, show them immediately (no skeleton)
+    const hasCache =
+      localStorage.getItem(LS_KEYS.achievementsEarned) ||
+      localStorage.getItem(LS_KEYS.completedMethods) ||
+      localStorage.getItem(LS_KEYS.totalMethods);
+    return !hasCache;
+  });
+  const [achievementsEarned, setAchievementsEarned] = useState(cachedAchievementsEarned);
+  const [completedCount, setCompletedCount] = useState(cachedCompletedCount);
+  const [totalMethods, setTotalMethods] = useState(cachedTotalMethods);
 
   const { savedIds } = useSavedMethods();
   const { profile, userId } = useUserProfile();
+  const { points, levelTitle, levelTier } = useUserProgress();
 
   const achievementsTotal = Achievements.length;
-  const points = profile?.points || 0;
-  const levelTier = useMemo(() => getLevelTier(points), [points]);
+
+  // Keep achievements total cached for consistency
+  useEffect(() => {
+    localStorage.setItem(LS_KEYS.achievementsTotal, String(achievementsTotal));
+  }, [achievementsTotal]);
+
 
   // OPTIMIZATION 1: Fetch Stats independently (Fast)
   useEffect(() => {
@@ -64,9 +102,19 @@ export default function Home() {
 
         if (abort) return;
 
-        setTotalMethods(countRes.count || 0);
-        setAchievementsEarned(earnedIds.length);
-        setCompletedCount(completed);
+        const methodsCount = countRes.count || 0;
+        const earnedCount = earnedIds.length;
+        const completedCountRes = completed;
+
+        // Update state
+        setTotalMethods(methodsCount);
+        setAchievementsEarned(earnedCount);
+        setCompletedCount(completedCountRes);
+
+        // Sync LocalStorage cache
+        localStorage.setItem(LS_KEYS.totalMethods, String(methodsCount));
+        localStorage.setItem(LS_KEYS.achievementsEarned, String(earnedCount));
+        localStorage.setItem(LS_KEYS.completedMethods, String(completedCountRes));
       } catch (error) {
         console.error("Error loading stats:", error);
       } finally {
@@ -93,7 +141,6 @@ export default function Home() {
 
     const loadSavedMethods = async () => {
       // If the hook is still initializing (size 0) but we have a cache saying we have items,
-      // wait for the hook. (This logic relies on the hook updating savedIds eventually)
       if (savedIds.size === 0) {
          setSavedMethods([]);
          setMethodsLoading(false);
@@ -131,20 +178,20 @@ export default function Home() {
 
   const deferredSavedMethods = useDeferredValue(savedMethods);
 
-  const savedMethodsContent = useMemo(() => {
-    // 1. Loading State (Smart Skeleton)
-    if (methodsLoading) {
-      return (
-        <div className="grid grid-cols-2 gap-3" style={{ minHeight: '120px' }}>
-          {/* Dynamically create skeletons based on previous session count */}
-          {Array.from({ length: skeletonCount }).map((_, i) => (
-            <div key={i} className="focus:outline-2 card h-24 bg-base-100 shadow-none border border-base-200">
-               <div className="skeleton w-full h-24 rounded-none"></div>
-            </div>
-          ))}
-        </div>
-      );
-    }
+    const savedMethodsContent = useMemo(() => {
+      // 1. Loading State (Smart Skeleton)
+      if (methodsLoading) {
+        return (
+          <div className="grid grid-cols-2 gap-3" style={{ minHeight: '120px' }}>
+            {/* Dynamically create skeletons based on previous session count */}
+            {Array.from({ length: skeletonCount }).map((_, i) => (
+              <div key={i} className="focus:outline-2 card h-24 bg-base-100 shadow-none border border-base-200">
+                <div className="skeleton w-full h-24 rounded-none"></div>
+              </div>
+            ))}
+          </div>
+        );
+      }
 
     // 2. Empty State
     if (deferredSavedMethods.length === 0) {
@@ -157,7 +204,6 @@ export default function Home() {
 
     // 3. Data State
     return (
-      // contain: 'paint' is safer than 'layout' here to prevent collapsing if browser miscalculates
       <div className="grid grid-cols-2 gap-3">
         {deferredSavedMethods.map((method, index) => (
           <Link
@@ -196,7 +242,7 @@ export default function Home() {
                 height={96}
                 className="w-full h-full object-cover"
               />
-              {/* Dark overlay for text readability */}
+
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-3">
                 <p className="font-semibold text-sm line-clamp-1 text-white shadow-sm">
                   {method.title}
@@ -217,7 +263,7 @@ export default function Home() {
         <ProgressCard
           icon={TrendingUp}
           heading="Level"
-          subheading={levelTier.name}
+          subheading={levelTitle}
           progressLabel="Next Level"
           progressCurrent={points}
           progressMax={levelTier.maxPoints}

@@ -1,5 +1,6 @@
 import { supabase } from "../lib/supabaseClient";
 import { checkEarneAchievements } from "../constants/achievements";
+import { getCompletedMethodsCount } from "./methods";
 
 /**
  * Get user's earned achievements
@@ -75,20 +76,7 @@ export async function completeMethod(
   if (updateError) throw updateError;
 }
 
-/**
- * Get count of completed methods for a user
- */
-export async function getCompletedMethodsCount(
-  userId: string
-): Promise<number> {
-  const { count, error } = await supabase
-    .from("completed_methods")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId);
 
-  if (error) throw error;
-  return count || 0;
-}
 
 /**
  * Get categories where user completed all methods

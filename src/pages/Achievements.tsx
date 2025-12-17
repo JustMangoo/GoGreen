@@ -8,11 +8,11 @@ import { ArrowLeft, Trophy, Lock } from "lucide-react";
 import { useNavigate } from "react-router";
 import {
   getUserAchievements,
-  getCompletedMethodsCount,
   getCompletedCategories,
   hasLearnedAllMethods,
   awardAchievement,
 } from "../services/achievements";
+import { getCompletedMethodsCount } from "../services/methods";
 import { useSavedMethods } from "../hooks/useSavedMethods";
 
 interface AchievementProgress {

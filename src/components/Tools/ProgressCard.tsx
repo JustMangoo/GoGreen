@@ -22,7 +22,7 @@ export default function ProgressCard({
   showProgressBar = false,
   children,
 }: ProgressCardProps) {
-  const progressPercentage = (progressCurrent / progressMax) * 100;
+  const progressPercentage = progressMax === Infinity ? 100 : (progressCurrent / progressMax) * 100;
 
   return (
     <div className="card card-border border-base-300 bg-base-200 w-full max-w-md p-3 gap-4">
