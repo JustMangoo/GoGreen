@@ -26,8 +26,7 @@ export function getThumbnailUrl(
     url.searchParams.set("height", height.toString());
     url.searchParams.set("quality", quality.toString());
     
-    // PERFORMANCE WIN: Force AVIF format for superior compression (LCP optimization)
-    // AVIF is generally significantly smaller than WebP
+    //Force AVIF format for superior compression (LCP optimization)
     url.searchParams.set("format", "avif");
     
     // Ensure we resize to cover the dimensions (prevents distortion)
