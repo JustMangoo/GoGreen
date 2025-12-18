@@ -71,15 +71,6 @@ export default function Authentication() {
 
       if (!authData.user) throw new Error("Failed to create user");
 
-      // Create profile in profiles table
-      const { error: profileError } = await supabase.from("profiles").insert([
-        {
-          id: authData.user.id,
-        },
-      ]);
-
-      if (profileError) throw profileError;
-
       setSuccess(
         "Account created! Please check your email to verify your account."
       );
