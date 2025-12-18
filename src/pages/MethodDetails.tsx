@@ -9,10 +9,11 @@ import {
   checkAndAwardAchievements,
 } from "../services/achievements";
 import { supabase } from "../lib/supabaseClient";
-import { ArrowLeft, Heart, Clock, Tag, Trophy, Edit } from "lucide-react";
+import { ArrowLeft, Heart, Clock, Tag, Trophy, Edit, Calculator } from "lucide-react";
 import AddMethodForm from "../components/Tools/AddMethodForm";
 import AchievementPopup from "../components/Tools/AchievementPopup";
 import { getFullSizeUrl } from "../utils/imageHelpers";
+import IngredientCalculator from "../components/Tools/IngredientCalculator";
 
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL;
 
@@ -34,6 +35,7 @@ export default function MethodDetails() {
     description: string;
     pointsReward: number;
   } | null>(null);
+  const [showCalc, setShowCalc] = useState(false);
   const { savedIds, savingId, toggleSave, newAchievements, clearAchievement } =
     useSavedMethods();
 
@@ -254,6 +256,47 @@ export default function MethodDetails() {
           {method.description}
         </p>
       </div>
+
+      {/* Ingredients section: always show list; calculator behind toggle */}
+      {Array.isArray((method as any)?.ingredients) && (method as any)?.ingredients.length > 0 && (
+        <div className="w-full card card-bordered p-4 gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-lg">Ingredients</h2>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm gap-2"
+              onClick={() => setShowCalc((s) => !s)}
+              aria-expanded={showCalc}
+              aria-controls="ingredient-calculator"
+            >
+              <Calculator size={16} /> {showCalc ? "Hide Calculator" : "Show Calculator"}
+            </button>
+          </div>
+
+          {/* Read-only ingredient list */}
+          <ul className="divide-y divide-base-300 rounded">
+            {((method as any).ingredients as Array<{ name: string; quantity: number; unit?: string }>).map((ing, idx) => (
+              <li key={idx} className="py-2 flex items-center justify-between gap-4">
+                <span className="font-medium text-sm">{ing.name}</span>
+                <span className="text-sm text-base-content/70 whitespace-nowrap">
+                  {ing.quantity}
+                  {ing.unit ? ` ${ing.unit}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          {showCalc && (
+            <div id="ingredient-calculator" className="pt-2">
+              <IngredientCalculator
+                ingredients={(method as any).ingredients as Array<{ name: string; quantity: number; unit?: string }>}
+                baseYield={Number((method as any)?.base_yield) || Number((method as any)?.servings) || 1}
+                yieldUnit={(method as any)?.yield_unit || ((method as any)?.servings !== undefined ? "servings" : "batch")}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Steps */}
       {method.steps && method.steps.length > 0 && (

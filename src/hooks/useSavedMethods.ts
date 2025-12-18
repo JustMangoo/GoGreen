@@ -60,7 +60,6 @@ export function useSavedMethods() {
       if (Number.isNaN(methodIdValue)) throw new Error("Invalid method ID");
 
       if (savedIds.has(methodId)) {
-        // Use Service to Remove
         await removeSavedMethod(userId, methodIdValue);
 
         setSavedIds((prev) => {
@@ -69,7 +68,6 @@ export function useSavedMethods() {
           return next;
         });
       } else {
-        // Use Service to Add
         await addSavedMethod(userId, methodIdValue);
 
         setSavedIds((prev) => {

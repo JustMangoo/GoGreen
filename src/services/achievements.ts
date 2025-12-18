@@ -1,5 +1,5 @@
 import { supabase } from "../lib/supabaseClient";
-import { checkEarneAchievements } from "../constants/achievements";
+import { checkEarnedAchievements } from "../constants/achievements";
 import { getCompletedMethodsCount } from "./methods";
 
 /**
@@ -154,7 +154,7 @@ export async function checkAndAwardAchievements(
     const totalMethods = methods?.length || 0;
 
     // Check which achievements should be earned
-    const shouldEarn = checkEarneAchievements({
+    const shouldEarn = checkEarnedAchievements({
       savedMethods: savedMethodsCount,
       completedMethods: completedCount,
       completedCategoryCount: completedCategories.length >= 1 ? 1 : 0,

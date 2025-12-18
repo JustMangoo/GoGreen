@@ -6,6 +6,12 @@ export interface Step {
   description: string;
 }
 
+export interface Ingredient {
+  name: string;
+  quantity: number;
+  unit?: string;
+}
+
 export interface Method {
   id: string;
   title: string;
@@ -14,6 +20,10 @@ export interface Method {
   category: string;
   image_url?: string;
   steps?: Step[];
+  ingredients?: Ingredient[];
+  base_yield?: number;
+  yield_unit?: string;
+  servings?: number;
   created_at?: string;
   [key: string]: any;
 }

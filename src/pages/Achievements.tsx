@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import {
   Achievements,
-  checkEarneAchievements,
+  checkEarnedAchievements,
 } from "../constants/achievements";
 import { ArrowLeft, Trophy, Lock } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -54,7 +54,7 @@ export default function AchievementsPage() {
         const hasLearned = await hasLearnedAllMethods(userId);
 
         // Check which achievements should be earned based on current progress
-        const shouldEarn = checkEarneAchievements({
+        const shouldEarn = checkEarnedAchievements({
           savedMethods: savedCount,
           completedMethods: completedCount,
           completedCategoryCount: completedCategories.length >= 1 ? 1 : 0,

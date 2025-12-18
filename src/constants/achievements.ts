@@ -70,7 +70,7 @@ export interface UserAchievementProgress {
 /**
  * Check which achievements the user has earned
  */
-export function checkEarneAchievements(
+export function checkEarnedAchievements(
   progress: UserAchievementProgress
 ): Achievement[] {
   const earned: Achievement[] = [];
@@ -114,7 +114,7 @@ export function checkEarneAchievements(
 export function getNextAchievement(
   progress: UserAchievementProgress
 ): Achievement | null {
-  const earned = checkEarneAchievements(progress);
+  const earned = checkEarnedAchievements(progress);
   const earnedIds = earned.map((a) => a.id);
 
   return (
