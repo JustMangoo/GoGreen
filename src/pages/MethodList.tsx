@@ -187,7 +187,7 @@ export default function MethodList() {
                       e.stopPropagation();
                       toggleSave(String(method.id));
                     }}
-                    className="btn btn-sm bg-base-100 btn-circle"
+                    className="btn btn-sm bg-base-100 btn-circle focus:outline-primary!"
                     disabled={savingId === String(method.id)}
                   >
                     <Heart
