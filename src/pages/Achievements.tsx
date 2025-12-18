@@ -14,6 +14,7 @@ import {
 } from "../services/achievements";
 import { getCompletedMethodsCount } from "../services/methods";
 import { useSavedMethods } from "../hooks/useSavedMethods";
+import { useUserProgressContext } from "../contexts/UserProgressContext";
 
 interface AchievementProgress {
   id: string;
@@ -30,7 +31,8 @@ export default function AchievementsPage() {
   const navigate = useNavigate();
   const [achievements, setAchievements] = useState<AchievementProgress[]>([]);
   const [loading, setLoading] = useState(true);
-  const { savedIds } = useSavedMethods();
+  const { addPoints } = useUserProgressContext();
+  const { savedIds } = useSavedMethods();  // Don't pass addPoints - we handle it in this page
 
   useEffect(() => {
     const loadAchievements = async () => {
@@ -65,6 +67,7 @@ export default function AchievementsPage() {
         });
 
         // Award any newly earned achievements
+        let totalPointsAwarded = 0;
         for (const achievement of shouldEarn) {
           if (!earnedSet.has(achievement.id)) {
             try {
@@ -74,6 +77,7 @@ export default function AchievementsPage() {
                 achievement.pointsReward
               );
               earnedSet.add(achievement.id);
+              totalPointsAwarded += achievement.pointsReward;
             } catch (error) {
               console.error(
                 `Failed to award achievement ${achievement.id}:`,
@@ -81,6 +85,11 @@ export default function AchievementsPage() {
               );
             }
           }
+        }
+
+        // Add points immediately if any were awarded
+        if (totalPointsAwarded > 0) {
+          addPoints(totalPointsAwarded);
         }
 
         // Build achievement progress list

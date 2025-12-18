@@ -6,9 +6,10 @@ import { useAuth } from "./useAuth";
 export function useUserProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { userId } = useAuth();
 
-  // Load profile when userId changes
+  // Load profile when userId changes or refresh is triggered
   useEffect(() => {
     let abort = false;
 
@@ -43,7 +44,11 @@ export function useUserProfile() {
     return () => {
       abort = true;
     };
-  }, [userId]);
+  }, [userId, refreshTrigger]);
 
-  return { profile, userId, loading };
+  const refreshProfile = () => {
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
+  return { profile, userId, loading, refreshProfile };
 }

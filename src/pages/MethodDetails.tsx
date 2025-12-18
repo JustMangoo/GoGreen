@@ -14,6 +14,7 @@ import AddMethodForm from "../components/Tools/AddMethodForm";
 import AchievementPopup from "../components/Tools/AchievementPopup";
 import { getFullSizeUrl } from "../utils/imageHelpers";
 import IngredientCalculator from "../components/Tools/IngredientCalculator";
+import { useUserProgressContext } from "../contexts/UserProgressContext";
 
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL;
 
@@ -36,8 +37,9 @@ export default function MethodDetails() {
     pointsReward: number;
   } | null>(null);
   const [showCalc, setShowCalc] = useState(false);
+  const { addPoints } = useUserProgressContext();
   const { savedIds, savingId, toggleSave, newAchievements, clearAchievement } =
-    useSavedMethods();
+    useSavedMethods(addPoints);
 
   const handleMasterMethod = async () => {
     if (!method || !methodId) return;
@@ -56,11 +58,20 @@ export default function MethodDetails() {
       setIsCompleted(true);
       setMasteringSuccess(true);
 
+      // Accumulate total points to add at once
+      let totalPointsToAdd = 10; // Points for completing method
+
       // Check for newly earned achievements
       const earned = await checkAndAwardAchievements(user.id, savedIds.size);
       if (earned.length > 0) {
         setNewAchievement(earned[0]);
+        // Add achievement points to total
+        const totalAchievementPoints = earned.reduce((sum, a) => sum + a.pointsReward, 0);
+        totalPointsToAdd += totalAchievementPoints;
       }
+
+      // Add all points at once to avoid double-counting
+      addPoints(totalPointsToAdd);
 
       setTimeout(() => setMasteringSuccess(false), 3000);
     } catch (err) {

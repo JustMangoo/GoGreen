@@ -7,7 +7,7 @@ import {
 import { useAuth } from "./useAuth";
 import { checkAndAwardAchievements } from "../services/achievements";
 
-export function useSavedMethods() {
+export function useSavedMethods(addPoints?: (amount: number) => void) {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +20,6 @@ export function useSavedMethods() {
       pointsReward: number;
     }>
   >([]);
-
 
   // 2. Load saved methods whenever userId changes
   useEffect(() => {
@@ -70,16 +69,27 @@ export function useSavedMethods() {
       } else {
         await addSavedMethod(userId, methodIdValue);
 
+        // Compute next saved count without side-effects in setState
+        const nextSize = savedIds.size + 1;
+
         setSavedIds((prev) => {
-          const next = new Set(prev).add(methodId);
-          // Check achievements after adding
-          checkAndAwardAchievements(userId, next.size).then((earned) => {
-            if (earned.length > 0) {
-              setNewAchievements((prev) => [...prev, ...earned]);
-            }
-          });
+          const next = new Set(prev);
+          next.add(methodId);
           return next;
         });
+
+        // Award achievements and update points once
+        const earned = await checkAndAwardAchievements(userId, nextSize);
+        if (earned.length > 0) {
+          setNewAchievements((prev) => [...prev, ...earned]);
+          if (addPoints) {
+            const totalPoints = earned.reduce(
+              (sum, a) => sum + a.pointsReward,
+              0
+            );
+            addPoints(totalPoints);
+          }
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");

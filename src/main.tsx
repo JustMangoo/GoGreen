@@ -12,6 +12,7 @@ import Authentication from "./pages/Authentication.tsx";
 import Navbar from "./components/Layout/Navbar.tsx";
 import TopBar from "./components/Layout/TopBar.tsx";
 import ProtectedRoute from "./components/Layout/ProtectedRoute.tsx";
+import { UserProgressProvider } from "./contexts/UserProgressContext.tsx";
 
 const protectedPages = [
   "/",
@@ -34,10 +35,11 @@ const pageComponents: Record<string, React.ComponentType> = {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <div className="mx-auto max-w-[430px]">
-        <div className="flex flex-col h-screen">
-          {/* Top Bar - Outside scroll container */}
-          <Routes>
+      <UserProgressProvider>
+        <div className="mx-auto max-w-[430px]">
+          <div className="flex flex-col h-screen">
+            {/* Top Bar - Outside scroll container */}
+            <Routes>
             {protectedPages.map((path) => (
               <Route
                 key={`topbar-${path}`}
@@ -88,6 +90,7 @@ createRoot(document.getElementById("root")!).render(
           </Routes>
         </div>
       </div>
+      </UserProgressProvider>
     </BrowserRouter>
   </StrictMode>
 );

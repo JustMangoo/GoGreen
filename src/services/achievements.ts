@@ -28,12 +28,16 @@ export async function awardAchievement(
     .from("user_achievements")
     .insert([{ user_id: userId, achievement_id: achievementId }]);
 
-  if (insertError && insertError.code !== "23505") {
-    // 23505 is unique constraint violation (already earned)
+  if (insertError) {
+    if (insertError.code === "23505") {
+      // 23505 is unique constraint violation (already earned)
+      // Don't add points again, just return silently
+      return;
+    }
     throw insertError;
   }
 
-  // Add points to profile
+  // Add points to profile only if achievement was newly inserted
   const { error: updateError } = await supabase.rpc("add_user_points", {
     p_user_id: userId,
     p_points: pointsReward,

@@ -9,7 +9,7 @@ import ProgressCard from "../components/Tools/ProgressCard";
 // Hooks
 import { useSavedMethods } from "../hooks/useSavedMethods";
 import { useUserProfile } from "../hooks/useUserProfile";
-import { useUserProgress } from "../hooks/useUserProgress";
+import { useUserProgressContext } from "../contexts/UserProgressContext";
 
 // Services & Utils
 import { getUserAchievements } from "../services/achievements";
@@ -22,9 +22,9 @@ import type { Method } from "../services/methods";
 
 export default function Home() {
   // --- Hooks ---
-  const { savedIds } = useSavedMethods();
   const { userId, profile } = useUserProfile();
-  const { points, levelTitle, levelTier } = useUserProgress();
+  const { points, levelTitle, levelTier } = useUserProgressContext();
+  const { savedIds } = useSavedMethods();
   
   // --- Initialization ---
   const achievementsTotal = Achievements.length;
@@ -288,11 +288,11 @@ export default function Home() {
       {/* SECTION 3: Saved Methods */}
       <section 
         aria-labelledby="saved-methods-heading" 
-        className="card card-border border-base-200 bg-base-200/50 w-full max-w-md p-3 gap-4"
+        className="card card-border border-base-300 bg-base-200 w-full max-w-md p-3 gap-4"
         style={{ contentVisibility: 'auto' }}
       >
         <div className="flex items-center gap-2 px-1">
-          <div className="flex justify-center items-center bg-base-100 text-primary rounded-xl w-10 h-10 shadow-sm border border-base-200">
+          <div className="flex justify-center items-center border-base-300 border-2 bg-base-100 text-primary rounded-box w-12 h-12 shrink-0">
             <Heart size={20} />
           </div>
           <h2 id="saved-methods-heading" className="font-semibold text-lg">Saved Methods</h2>

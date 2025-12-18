@@ -1,8 +1,8 @@
 import { NavLink } from "react-router";
-import { useUserProgress } from "../../hooks/useUserProgress";
+import { useUserProgressContext } from "../../contexts/UserProgressContext";
 
 export default function TopBar() {
-  const { points, levelTitle } = useUserProgress();
+  const { points, levelTitle } = useUserProgressContext();
 
   // Check if data is ready (assuming empty string means loading)
   const isLoading = !levelTitle;

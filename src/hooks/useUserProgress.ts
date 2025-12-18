@@ -9,7 +9,7 @@ import {
 } from "../services/statsCache";
 
 export function useUserProgress() {
-  const { profile, userId } = useUserProfile();
+  const { profile, userId, refreshProfile } = useUserProfile();
   const [points, setPoints] = useState(0);
   const [levelTitle, setLevelTitle] = useState("");
 
@@ -46,5 +46,5 @@ export function useUserProgress() {
     }
   }, [userId, levelTier?.name]);
 
-  return { points, levelTitle, levelTier };
+  return { points, levelTitle, levelTier, refreshProfile };
 }

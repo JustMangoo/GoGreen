@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import type { Method } from "../services/methods";
 import AddMethodForm from "../components/Tools/AddMethodForm";
 import { useSavedMethods } from "../hooks/useSavedMethods";
+import { useUserProgressContext } from "../contexts/UserProgressContext";
 import { useSearchParams, useNavigate } from "react-router";
 import { supabase } from "../lib/supabaseClient";
 import AchievementPopup from "../components/Tools/AchievementPopup";
@@ -26,6 +27,7 @@ export default function MethodList() {
     description: string;
     pointsReward: number;
   } | null>(null);
+  const { addPoints } = useUserProgressContext();
   const {
     savedIds,
     savingId,
@@ -33,7 +35,7 @@ export default function MethodList() {
     error: saveError,
     newAchievements,
     clearAchievement,
-  } = useSavedMethods();
+  } = useSavedMethods(addPoints);
 
   // Handle achievement popup from saved methods
   useEffect(() => {
