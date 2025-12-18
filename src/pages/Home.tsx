@@ -122,18 +122,12 @@ export default function Home() {
     return () => { abort = true; };
   }, [userId]);
 
-  // 2. Fetch Saved Methods
+  // 2. Fetch Saved Methods (always refetch to keep cache fresh)
   useEffect(() => {
     let abort = false;
 
-    // Loading Logic:
-    // If we have cached images, we don't set loading=true (keeps UI stable).
-    // If cache is empty but hooks say we have IDs, we must load.
-    if (savedMethods.length === 0 && savedIds.size > 0) {
-      setMethodsLoading(true);
-    } 
-    // Empty Logic: Only valid if we are logged in (userId exists) and have 0 IDs
-    else if (savedIds.size === 0 && userId && savedMethods.length === 0) {
+    // Empty Logic: Clear cache when no saved methods
+    if (savedIds.size === 0 && userId) {
       setSavedMethods([]);
       setMethodsLoading(false);
       setStatsCache({ savedMethodsCount: 0 });
@@ -143,6 +137,9 @@ export default function Home() {
 
     const loadSavedMethods = async () => {
       if (savedIds.size === 0) return;
+
+      // Always show loading when fetching to refresh cache
+      setMethodsLoading(true);
 
       try {
         const { data, error } = await supabase
@@ -167,7 +164,7 @@ export default function Home() {
 
     loadSavedMethods();
     return () => { abort = true; };
-  }, [savedIds, userId]); // savedMethods dependency intentionally omitted
+  }, [savedIds, userId]);
 
   // --- Render ---
 
